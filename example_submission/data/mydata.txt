@@ -1,0 +1,3 @@
+this is where I would put any data my player my use if I had some.
+
+You can place file in any structure you want in here. (Just no source files or executables)

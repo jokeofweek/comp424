@@ -50,6 +50,18 @@ public class CCMove extends Move{
 	}
 
 
+	public int getPlayer_id() {
+		return player_id;
+	}
+
+	public Point getFrom() {
+		return from;
+	}
+
+	public Point getTo() {
+		return to;
+	}
+
 	@Override
 	public String toPrettyString() {
 		String s="";

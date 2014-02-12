@@ -35,7 +35,7 @@ public class Client implements Runnable {
             "        serverName is the server address (default=" + DEFAULT_SERVER + ") and\n" +
             "        serverPort is the port number (default="+DEFAULT_PORT+").\n" +
             "  e.g.\n" +
-            "  java boardgame.Client halma.CCBiasedRandomPlayer localhost " + DEFAULT_PORT );
+            "  java boardgame.Client halma.CCRandomPlayer localhost " + DEFAULT_PORT );
     }
     
     public static void main(String[] args) {
