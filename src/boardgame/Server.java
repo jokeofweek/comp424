@@ -1,5 +1,7 @@
 package boardgame;
 
+import halma.CCBoard;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -554,8 +556,7 @@ public class Server implements Runnable {
 	if( c == Board.BOARD )
 	    board.forceWinner( Board.DRAW );
 	else
-	    // TODO This only works for 2-player games
-	    board.forceWinner( players[c%players.length].getPlayerID() );    
+	    board.forceWinner( (CCBoard.getTeamIndex(players[c].getPlayerID())+1)%2 );    
     }
 
     // Runnables to call the GUI's methods in the dispatch
