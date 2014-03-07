@@ -45,7 +45,7 @@ implements BoardPanel.BoardPanelListener  {
                 "breakthrough.BTFixedPlayer", */
         "halma.CCRandomPlayer"};
     private static final int BOARD_SIZE = 400;
-    private static final int LIST_WIDTH = 200;
+    private static final int LIST_WIDTH = 280;
     
     private Board board; // Most recently updated board
     private int currentBoard = -1; // Displayed board index
