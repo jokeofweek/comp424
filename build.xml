@@ -3,6 +3,10 @@
   <property name="src" location="src"/>
   <property name="build" location="bin"/>
   <property name="dist"  location="jar"/>
+  <property name="local_ip"  value="localhost"/>
+  <property name="local_port"  value="8123"/>
+  <property name="remote_ip"  value="192.168.1.153"/>
+  <property name="remote_port"  value="8123"/>
 
   <target name="init">
     <!-- Create the time stamp -->
@@ -24,13 +28,13 @@
     <jar jarfile="${dist}/projectsrc-${TSTAMP}.jar" basedir="${build}"/>
   </target>
 
-  <target name="play" depends="dist">
+  <target name="local" depends="dist">
     <java classname="boardgame.Client"
        fork="true"
        failonerror="true"
        maxmemory="512m"
        >
-      <arg line="halma.CCHumanPlayer localhost 8123"/>
+      <arg line="halma.CCHumanPlayer ${local_ip} ${local_port}"/>
       <classpath>
         <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
         <pathelement path="${java.class.path}"/>
@@ -38,13 +42,42 @@
     </java>
   </target>
   
-  <target name="play-ai" depends="dist">
+  <target name="local-ai" depends="dist">
     <java classname="boardgame.Client"
        fork="true"
        failonerror="true"
        maxmemory="512m"
        >
-      <arg line="halma.CCAIPlayer localhost 8123"/>
+      <arg line="halma.CCAIPlayer ${local_ip} ${local_port}"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+
+
+  <target name="remote" depends="dist">
+    <java classname="boardgame.Client"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="halma.CCHumanPlayer ${remote_ip} ${remote_port}"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="remote-ai" depends="dist">
+    <java classname="boardgame.Client"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="halma.CCAIPlayer ${remote_ip} ${remote_port}"/>
       <classpath>
         <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
         <pathelement path="${java.class.path}"/>
