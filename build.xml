@@ -1,0 +1,68 @@
+<project name="COMP424" default="dist" basedir=".">
+  <!-- set global properties fort his build -->
+  <property name="src" location="src"/>
+  <property name="build" location="bin"/>
+  <property name="dist"  location="jar"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}"/>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+    <jar jarfile="${dist}/projectsrc-${TSTAMP}.jar" basedir="${build}"/>
+  </target>
+
+  <target name="play" depends="dist">
+    <java classname="boardgame.Client"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="halma.CCHumanPlayer localhost 8123"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+  
+  <target name="play-ai" depends="dist">
+    <java classname="boardgame.Client"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="halma.CCAIPlayer localhost 8123"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+
+  <target name="server" depends="dist">
+    <java classname="boardgame.Server"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="-p 8123 -t 300000 -b halma.CCBoard"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+</project>
