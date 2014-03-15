@@ -56,6 +56,20 @@
     </java>
   </target>
 
+  <target name="local-random" depends="dist">
+    <java classname="boardgame.Client"
+       fork="true"
+       failonerror="true"
+       maxmemory="512m"
+       >
+      <arg line="halma.CCRandomPlayer ${local_ip} ${local_port}"/>
+      <classpath>
+        <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+    </java>
+  </target>
+
 
   <target name="remote" depends="dist">
     <java classname="boardgame.Client"

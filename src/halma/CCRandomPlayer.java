@@ -27,9 +27,8 @@ public class CCRandomPlayer extends Player {
         // Cast the arguments to the objects we want to work with
 
         CCBoard board = (CCBoard) theboard;
-
-        // Get the list of legal moves.
         
+        // Get the list of legal moves.        
         ArrayList<CCMove> moves = board.getLegalMoves();
 
         // Otherwise, return a randomly selected move.
