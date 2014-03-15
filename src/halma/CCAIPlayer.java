@@ -1,11 +1,12 @@
 package halma;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Random;
+import java.util.Set;
 
 import boardgame.Board;
 import boardgame.Move;
@@ -15,88 +16,111 @@ import boardgame.Player;
  *A random Halma player.
  */
 public class CCAIPlayer extends Player {
-    private boolean verbose = false;
-    Random rand = new Random();
+    private final static int[] FRIEND_ID = {3,2,1,0};
     
-    private final Point[][] directionOffsets = new Point[][]{
-    		{new Point(1,0), new Point(1,1), new Point(0,1)}, // top left
-    		{new Point(-1,0), new Point(-1,1), new Point(0,1)}, // bottom left
-    		{new Point(1,0), new Point(1,-1), new Point(0,-1)}, // top right
-    		{new Point(-1,0), new Point(-1,-1), new Point(0,-1)} // bottom right
+    private Set<Point> movePoints = new HashSet<>();
+    
+    private final static Point[] END_POINTS = {
+    	new Point(CCBoard.SIZE - 1, CCBoard.SIZE - 1),
+    	new Point(0, CCBoard.SIZE - 1),
+    	new Point(CCBoard.SIZE - 1, 0),
+    	new Point(0, 0)
+    };
+        
+    private final static int[][] OFFSETS = {
+    	{1, 1},
+    	{-1, 1},
+    	{1, -1},
+    	{-1, -1}
     };
     
     /** Provide a default public constructor */
     public CCAIPlayer() { super("AI Player"); }
     public CCAIPlayer(String s) { super(s); }
     
+    
     public Board createBoard() { return new CCBoard(); }
-    
-    private CCMove lastMove;
-    
+        
     /** Implement a very stupid way of picking moves */
     public Move chooseMove(Board theboard) 
     {
-    	System.out.println("Entering choose move.");
-    	// For now, if our last move was a hop, end the turn
-    	if (lastMove != null && lastMove.isHop()) {
-    		CCMove endMove = new CCMove(playerID, lastMove.to, null);
-    		lastMove = null;
-    		System.out.println("Early end - " + endMove);
-    		return endMove;
-    	}
-    	
+    	System.out.println(playerID + " is choosing a move.");
+
         // Cast the arguments to the objects we want to work with
         CCBoard board = (CCBoard) theboard;
-        
-        // Get your pieces
-        ArrayList<Point> pieces = board.getPieces(playerID);
 
         // Generate all possible moves, adding them to the queue
-        PriorityQueue<CCMove> moves = new PriorityQueue<>(50, MoveComparator.INSTANCE);
-        
-        for (Point piece : pieces) {
-        	Point[] offsets = directionOffsets[playerID];
-        	for (Point offset : offsets) {
-        		CCMove move = null;
-        		// Check if it is a hop
-        		Point firstMove = new Point(piece.x + offset.x, piece.y + offset.y);
-        		if (board.getPieceAt(firstMove) != null) {
-        			Point secondMove = new Point(firstMove.x + offset.x, firstMove.y + offset.y);
-        			// Only register the move if there is no second move
-        			if (board.getPieceAt(secondMove) == null) {
-        				move = new CCMove(playerID, piece, secondMove);
-        				System.out.println("HOP - " + MoveComparator.INSTANCE.getMoveScore(move) + " - " + move.toPrettyString());
-        			}
-        		} else {
-        			// Add it in as a move
-        			move = new CCMove(playerID, piece, firstMove);
-        		}
-        		
-        		if (move != null && board.isLegal(move)) {
-        			System.out.println("Adding move");
-        			moves.add(move);
+                
+        CCMove move = null;
+        int bestScore = Integer.MIN_VALUE;
+        int score;
+        for (CCMove testMove : board.getLegalMoves()) {
+        	if (!movePoints.contains(testMove)) {
+        		score = getMoveScore(testMove, board);
+        		if (score > bestScore || (score == bestScore && Math.random() > 0.5)) {
+        			bestScore = score;
+        			move = testMove;
         		}
         	}
         }
-                
-        
-        // Get the first moves
-        lastMove = moves.remove();
-        System.out.println("Picking " + lastMove);
-        return lastMove;
+ 
+    	if (move.isHop()) {
+    		movePoints.add(move.to);
+    	} else {
+    		movePoints = new HashSet<>();
+    	}
+
+    	System.out.println(playerID + " chose " + move.toPrettyString());
+        return move;
     }
     
-    private static class MoveComparator implements Comparator<CCMove> {
-    	public static final MoveComparator INSTANCE = new MoveComparator();
-    	private int getMoveScore(CCMove m) {
-    		return (Math.abs(m.from.x - m.to.x) + Math.abs(m.from.y - m.to.y));
-    	}
-    	@Override
-    	public int compare(CCMove o1, CCMove o2) {
-    		System.out.println("Move: " + o1.toPrettyString() + "(" + getMoveScore(o1));
-    		System.out.println("Move: " + o2.toPrettyString() + "(" + getMoveScore(o2));
-    		return getMoveScore(o2) - getMoveScore(o1);
-    	}
-    }
+    private int getMoveScore(CCMove m, CCBoard board) {
+		// Empty move
+		if (m.from == null && m.to == null) {
+			return 0;
+		}
+		
+		
+		int progress = getProgress(m);
+		int removedFromBase = (CCBoard.bases[playerID].contains(m.from) && !CCBoard.bases[playerID].contains(m.to)) ? 1 : 0;
+		int stillInBase = CCBoard.bases[playerID].contains(m.to) ? 1 : 0;
+		int joinFriendBase = (!CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
+		int leaveFriendBase = (CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && !CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
+		
+		int progressWeight = 5;
+		int removedWeight = board.getTurnsPlayed() / 3;
+		int stillInBaseWeight = board.getTurnsPlayed() / 3;
+		int joinFriendBaseWeight = 0;
+		int leaveFriendBaseWeight = 0;
+		
+		// If we are no longer in beginning game
+		if (board.getTurnsPlayed() > 100) {
+			progressWeight = 5;
+			joinFriendBaseWeight = 20;
+			removedWeight = 0;
+			leaveFriendBaseWeight = -5;
+			stillInBaseWeight = -1000;
+		}
+		
+		return (progress * progressWeight) +
+				(removedFromBase * removedWeight) +
+				(stillInBase * stillInBaseWeight) +
+				(joinFriendBase * joinFriendBaseWeight) +
+				(leaveFriendBase * leaveFriendBaseWeight);
+	}
     
+
+	private int getProgress(CCMove m) {
+		int ret = 0;
+		int xOffset = m.to.x - m.from.x;
+		int yOffset = m.to.y - m.from.y;
+		
+		if (OFFSETS[playerID][0] * xOffset > 0) ret += Math.abs(xOffset);
+		if (OFFSETS[playerID][0] * xOffset < 0) ret -= 555;
+		if (OFFSETS[playerID][1] * yOffset > 0) ret += Math.abs(yOffset);
+		if (OFFSETS[playerID][1] * yOffset < 0) ret -= 555;
+
+		return 2 * ret;
+		
+	}
 } // End class
