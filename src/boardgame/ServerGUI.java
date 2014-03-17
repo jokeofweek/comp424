@@ -44,7 +44,9 @@ implements BoardPanel.BoardPanelListener  {
         /*	"breakthrough.BTRandomPlayer", 
                 "breakthrough.BTFixedPlayer", */
         "halma.CCRandomPlayer",
-        "halma.CCAIPlayer"};
+        "halma.CCAIPlayer",
+        "halma.CCSimpleAIPlayer",
+        "halma.CCManhattanOptimizerPlayer"};
     private static final int BOARD_SIZE = 400;
     private static final int LIST_WIDTH = 280;
     

@@ -18,7 +18,7 @@ import boardgame.Player;
 /**
  *A random Halma player.
  */
-public class CCAIPlayer extends Player {
+public class CCSimpleAIPlayer extends Player {
     private final static int[] FRIEND_ID = {3,2,1,0};
     
     private Set<Point> movePoints = new HashSet<>();
@@ -54,8 +54,8 @@ public class CCAIPlayer extends Player {
     };
     
     /** Provide a default public constructor */
-    public CCAIPlayer() { super("AI Player"); }
-    public CCAIPlayer(String s) { super(s); }
+    public CCSimpleAIPlayer() { super("Simple AI Player"); }
+    public CCSimpleAIPlayer(String s) { super(s); }
     
     
     public Board createBoard() { return new CCBoard(); }
@@ -74,7 +74,7 @@ public class CCAIPlayer extends Player {
         int bestScore = Integer.MIN_VALUE;
         int score;
         for (CCMove testMove : board.getLegalMoves()) {
-        	if (!movePoints.contains(testMove.to)) {
+        	if (!movePoints.contains(testMove)) {
         		score = getMoveScore(testMove, board);
         		if (score > bestScore || (score == bestScore && Math.random() > 0.5)) {
         			bestScore = score;
@@ -98,40 +98,23 @@ public class CCAIPlayer extends Player {
 		if (m.from == null && m.to == null) {
 			return 0;
 		}
-		
+
 		int progress = getProgress(m);
 		int removedFromBase = (CCBoard.bases[playerID].contains(m.from) && !CCBoard.bases[playerID].contains(m.to)) ? 1 : 0;
 		int stillInBase = CCBoard.bases[playerID].contains(m.to) ? 1 : 0;
 		int joinFriendBase = (!CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
 		int leaveFriendBase = (CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && !CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
+		int canHopAfter = canHopAfterAndProgress(m.to, board) ? 1 : 0;
 		int bestHopSequence = (m.isHop() ? getClosestHopSequence(m.to, board) : 0);
-		
-		int leavesFriendsAlone = 0;
-		
-		// Calculate the number of your own stones and your friend stones you'd be letting not hop
-		for (Point piece : board.getPieces(playerID)) {
-			// Test all other pieces
-			if (!piece.equals(m.from)) {
-				if (canHop(piece, null, board) && !canHop(piece, m.from, board)) {
-					leavesFriendsAlone++;
-				}
-			}
-		}
-		for (Point piece : board.getPieces(FRIEND_ID[playerID])) {
-			if (canHop(piece, null, board) && !canHop(piece, m.from, board)) {
-				leavesFriendsAlone++;
-			}
-		}
-		
-		
+
+
 		int progressWeight = 5;
 		int removedWeight = board.getTurnsPlayed() / 3;
 		int stillInBaseWeight = board.getTurnsPlayed() / 3;
 		int joinFriendBaseWeight = 0;
 		int leaveFriendBaseWeight = 0;
-		int bestHopSequenceWeight = 5;
-		int leavesFriendsAloneWeight = 2;
-		
+		int bestHopSequenceWeight = board.getTurnsPlayed() / 20;
+
 		// If we are no longer in beginning game
 		if (board.getTurnsPlayed() > 100) {
 			progressWeight = 2;
@@ -139,45 +122,35 @@ public class CCAIPlayer extends Player {
 			removedWeight = 0;
 			leaveFriendBaseWeight = -5;
 			stillInBaseWeight = -1000;
-			bestHopSequenceWeight = 10;
-			leavesFriendsAloneWeight = board.getTurnsPlayed() / 40;
 		}
-		
+
 		return (progress * progressWeight) +
 				(removedFromBase * removedWeight) +
 				(stillInBase * stillInBaseWeight) +
 				(joinFriendBase * joinFriendBaseWeight) +
 				(leaveFriendBase * leaveFriendBaseWeight) + 
-				(bestHopSequence * bestHopSequenceWeight) + 
-				(leavesFriendsAlone * leavesFriendsAloneWeight);
+				(bestHopSequence * bestHopSequenceWeight);
 	}
     
-    /**
-     * Tests whether a stone at a given point can still hop if we ignore a
-     * particular point. Used to test if a point is left alone after ignoring
-     * another point.
-     * @param p
-     * @param ignorePoint
-     * @param board
-     * @return
-     */
-    private boolean canHop(Point p, Point ignorePoint, CCBoard board) {
-    	for (int[] offset : DIRECTIONAL_OFFSETS) {
-    		Point overStone = new Point(p.x + offset[0], 
-    				p.y + offset[1]);
-    		if (!overStone.equals(ignorePoint) && board.getPieceAt(overStone) != null) {
-    			Point hopDest = (new Point(p.x + 2 * offset[0],
-    					p.y + 2 * offset[1]));
+    private boolean canHopAfterAndProgress(Point p, CCBoard board) {
+    	for (int[] offset : DIRECTIONAL_PROGRESS_OFFSETS) {
+    		if (board.getPieceAt(new Point(p.x + (OFFSETS[playerID][0] * offset[0]), 
+    				p.y + (OFFSETS[playerID][1] * offset[1]))) != null) {
+    			Point hopDest = (new Point(p.x + 2 * (OFFSETS[playerID][0] * offset[0]),
+    					p.y + 2 * (OFFSETS[playerID][1] * offset[1])));
     			// Only count it if the hop would reduce the distance
     			if (board.getPieceAt(hopDest) == null && hopDest.x >= 0 && hopDest.y >= 0
-    					&& hopDest.x < CCBoard.SIZE && hopDest.y < CCBoard.SIZE) {
+    					&& hopDest.x < CCBoard.SIZE && hopDest.y < CCBoard.SIZE
+    					&& manhattanDistance(p, GOAL_POINTS[playerID]) - manhattanDistance(hopDest, GOAL_POINTS[playerID]) > 0) {
+    				
+    				
     				return true;
     			}
     		}
     	}
     	return false;
     }
-    
+
     private int manhattanDistance(Point from, Point to) {
     	return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
     }
@@ -223,13 +196,13 @@ public class CCAIPlayer extends Player {
 		int ret = 0;
 		int xOffset = m.to.x - m.from.x;
 		int yOffset = m.to.y - m.from.y;
-		
+
 		if (OFFSETS[playerID][0] * xOffset > 0) ret += Math.abs(xOffset);
 		if (OFFSETS[playerID][0] * xOffset < 0) ret -= Math.abs(xOffset);
 		if (OFFSETS[playerID][1] * yOffset > 0) ret += Math.abs(yOffset);
 		if (OFFSETS[playerID][1] * yOffset < 0) ret -= Math.abs(yOffset);
 
 		return 2 * ret;
-		
+
 	}
 } // End class
