@@ -34,6 +34,7 @@ public class CombinedMoveGenerator implements Iterator<BoardPointPair> {
 			innerIterator = new MoveGenerator(innerContext.getBoard(), (startPlayer + 1) % 4);
 		}
 		BoardPointPair v = innerIterator.next();
+		if (innerContext.getInitial().equals(innerContext.getDestination()));
 		// Only keep the board of the new board point pair.
 		v.setInitial(innerContext.getInitial());
 		v.setDestination(innerContext.getDestination());

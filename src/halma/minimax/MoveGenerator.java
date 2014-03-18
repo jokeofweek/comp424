@@ -4,15 +4,14 @@ import halma.CCBoard;
 import halma.CCMove;
 
 import java.awt.Point;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-
-import javax.management.RuntimeErrorException;
 
 /**
  * This lazily generates moves for one player.
@@ -36,7 +35,9 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 		}
 		
 		// Initialize the queue
-		for (CCMove move: startBoard.getLegalMoves()) {
+		ArrayList<CCMove> moves = startBoard.getLegalMoves();
+		Collections.shuffle(moves);
+		for (CCMove move : moves) {
 			// Create the board with the hop and end
 			CCBoard b = (CCBoard)startBoard.clone();
 			b.move(move);
@@ -47,6 +48,7 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 				// Register the initial in the set of moves we've went to
 				// to avoid hopping back
 				hoppedPoints.get(move.getFrom()).add(move.getTo());
+				hoppedPoints.get(move.getFrom()).add(move.getFrom());
 			} else {
 				boards.add(p);
 			}	

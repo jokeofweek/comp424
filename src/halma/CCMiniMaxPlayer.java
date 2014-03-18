@@ -36,6 +36,7 @@ public class CCMiniMaxPlayer extends Player {
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
     private final static int[] NEXT_OPPONENT = {1, 3, 3, 1};
+    private final static int TIMEOUT = 800;
 
     public CCMiniMaxPlayer() { super("Minimaxin"); }
     public CCMiniMaxPlayer(String s) { super(s); }
@@ -55,7 +56,7 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// Minimax
 		long initialTime = System.currentTimeMillis();
-		BoardPointPair pair = minimax(board, 3, true,
+		BoardPointPair pair = minimax(board, 3, System.currentTimeMillis(), true,
 				new Pair<Integer,BoardPointPair>(Integer.MIN_VALUE, null),
 				new Pair<Integer,BoardPointPair>(Integer.MAX_VALUE, null)
 			).getSecond();
@@ -74,7 +75,7 @@ public class CCMiniMaxPlayer extends Player {
 	public void movePlayed(Board board, Move move) {
 	}
 	
-	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, boolean isMaximizing,
+	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
 			Pair<Integer, BoardPointPair> a, Pair<Integer, BoardPointPair> b) {
 		if (depth == 0 || startBoard.getWinner() != Board.NOBODY) {
 			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
@@ -95,11 +96,15 @@ public class CCMiniMaxPlayer extends Player {
 		if (isMaximizing) {
 			while (iterator.hasNext()) {
 				BoardPointPair pair = iterator.next();
-				val = minimax(pair.getBoard(), depth - depthDiff, false, a, b);
+				val = minimax(pair.getBoard(), depth - depthDiff, startTime, false, a, b);
 				if (val.getFirst() > a.getFirst()) {
 					a = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
 				}			
 				if (b.getFirst() <= a.getFirst()) {
+					break;
+				}
+				// Timeout
+				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					break;
 				}
 			}
@@ -107,11 +112,15 @@ public class CCMiniMaxPlayer extends Player {
 		} else {
 			while (iterator.hasNext()) {
 				BoardPointPair pair = iterator.next();
-				val = minimax(pair.getBoard(), depth - depthDiff, true, a, b);
+				val = minimax(pair.getBoard(), depth - depthDiff, startTime, true, a, b);
 				if (val.getFirst() < b.getFirst()) {
 					b = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
 				}
 				if (b.getFirst() <= a.getFirst()) {
+					break;
+				}
+				// Timeout
+				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					break;
 				}
 			}			
