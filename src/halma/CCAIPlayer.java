@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 
 import boardgame.Board;
@@ -60,9 +61,18 @@ public class CCAIPlayer extends Player {
     
     public Board createBoard() { return new CCBoard(); }
         
+    private List<CCMove> moveList = null;
+    
     /** Implement a very stupid way of picking moves */
     public Move chooseMove(Board theboard) 
     {
+    	// If we are at the beginning, generate the initial move list
+    	if (moveList == null) {
+    		generateStartingMoveList();
+    	}
+    	if (!moveList.isEmpty()) {
+    		return moveList.remove(0);
+    	}
     	long startTime = System.currentTimeMillis();
 
         // Cast the arguments to the objects we want to work with
@@ -70,19 +80,25 @@ public class CCAIPlayer extends Player {
 
         // Generate all possible moves, adding them to the queue
                 
-        CCMove move = null;
         int bestScore = Integer.MIN_VALUE;
+        List<CCMove> moves = new ArrayList<CCMove>();
         int score;
         for (CCMove testMove : board.getLegalMoves()) {
         	if (!movePoints.contains(testMove.to)) {
         		score = getMoveScore(testMove, board);
-        		if (score > bestScore || (score == bestScore && Math.random() > 0.5)) {
+        		if (score > bestScore) {
         			bestScore = score;
-        			move = testMove;
+        			moves = new ArrayList<CCMove>();
+        			moves.add(testMove);
+        		} else if (score == bestScore) {
+        			moves.add(testMove);
         		}
         	}
         }
- 
+        
+        // Pick random move from moves.
+        CCMove move = moves.get(new Random().nextInt(moves.size()));
+        
     	if (move.isHop()) {
     		movePoints.add(move.to);
     	} else {
@@ -237,5 +253,38 @@ public class CCAIPlayer extends Player {
 
 		return 2 * ret;
 		
+	}
+	
+	/**
+	 * Rotates a point for player 1 to another player.
+	 * @param p The point to rotate.
+	 * @return The rotated point.
+	 */
+	private Point rotateToPlayer(Point p) {
+		if (playerID == 0) {
+			return p;
+		} else if (playerID == 1) {
+			return new Point(15 - p.x, p.y);
+		} else if (playerID == 2) {
+			return new Point(p.x, 15 - p.y);
+		} else {
+			return new Point(15 - p.x, 15 - p.y);
+		}
+	}
+	
+	private void generateStartingMoveList() {
+		CCMove[] moves = new CCMove[] {
+			new CCMove(playerID, rotateToPlayer(new Point(1, 0)), rotateToPlayer(new Point(3, 2))),
+			new CCMove(playerID, null, null),
+			new CCMove(playerID, rotateToPlayer(new Point(0, 2)), rotateToPlayer(new Point(2, 4))),
+			new CCMove(playerID, null, null),
+			new CCMove(playerID, rotateToPlayer(new Point(1, 2)), rotateToPlayer(new Point(1, 4))),
+			new CCMove(playerID, rotateToPlayer(new Point(1, 4)), rotateToPlayer(new Point(3, 4))),
+			new CCMove(playerID, null, null)
+		};
+		moveList = new ArrayList<>(moves.length);
+		for (int i = 0; i < moves.length; i++) {
+			moveList.add(moves[i]);
+		}
 	}
 } // End class

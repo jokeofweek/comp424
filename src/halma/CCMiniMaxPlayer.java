@@ -48,7 +48,7 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// Minimax
 		long initialTime = System.currentTimeMillis();
-		BoardPointPair pair = minimax(board, 2, playerID).getSecond();
+		BoardPointPair pair = minimax(board, 2, playerID, null, null).getSecond();
 
 		// If the move isn't a hop, then simply apply it
 		if (!pair.getMove().isHop()) {
@@ -57,6 +57,10 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// If the move is a hop, then need to figure out sequence from initial to hop.
 		generateMoveSequence(board, pair.getInitial(), pair.getMove().to);
+		for (CCMove m : moveList) {
+			System.out.print(m.from + " ");
+		}
+		System.out.println();
 		return moveList.remove();
 	}
 
@@ -64,9 +68,9 @@ public class CCMiniMaxPlayer extends Player {
 	public void movePlayed(Board board, Move move) {
 	}
 	
-	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, int playerID) {
+	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, int playerID, Point from, Point to) {
 		if (depth == 0 || startBoard.getWinner() != Board.NOBODY) {
-			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
+			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard, playerID, from, to), null);
 		}
 		
 		boolean isMaximizing = (playerID == this.playerID || playerID == FRIEND[this.playerID]);
@@ -76,7 +80,7 @@ public class CCMiniMaxPlayer extends Player {
 		if (isMaximizing) {
 			bestValue = new Pair<Integer, BoardPointPair>(Integer.MIN_VALUE, null);
 			for (BoardPointPair pair : generateBoards(startBoard, playerID)) {
-				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4);
+				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4, pair.getInitial(), pair.getMove().getTo());
 				if (val.getFirst() > bestValue.getFirst()) {
 					bestValue = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
 				}				
@@ -84,7 +88,7 @@ public class CCMiniMaxPlayer extends Player {
 		} else {
 			bestValue = new Pair<Integer, BoardPointPair>(Integer.MAX_VALUE, null);
 			for (BoardPointPair pair : generateBoards(startBoard, playerID)) {
-				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4);
+				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4, pair.getInitial(), pair.getMove().getTo());
 				if (val.getFirst() < bestValue.getFirst()) {
 					bestValue = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
 				}
@@ -232,22 +236,29 @@ public class CCMiniMaxPlayer extends Player {
 		return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 	}
 	
-	public int evaluateBoard(CCBoard board) {
+	public int evaluateBoard(CCBoard board, int player, Point from, Point to) {
+		if (board.getWinner() == board.getTeamIndex(playerID)) {
+			return Integer.MAX_VALUE;
+		} else if (board.getWinner() == board.getTeamIndex(OPPONENT[playerID][0])) {
+			return Integer.MIN_VALUE;
+		}
+
 		// For now just sum of your manhattan distance
 		int ownDistance = 0;
 		int enemyDistance = 0;
-		
+
 		for (int i = 0; i < 4; i++) {
 			for (Point p : board.getPieces(i)) {
 				int distance = 32 - manhattanDistance(p, GOAL_POINTS[i]);
-				if (i == playerID || i == FRIEND[i]) {
+				if (i == playerID || i == FRIEND[playerID]) {
 					ownDistance += distance;
 				} else {
 					enemyDistance += distance;
 				}
 			}
 		}
-		return ownDistance - enemyDistance;
+		
+		return /*manhattanDistance(from, to) **/ (ownDistance - enemyDistance);
 	}
 		
 }
