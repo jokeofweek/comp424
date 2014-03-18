@@ -105,6 +105,7 @@ public class CCAIPlayer extends Player {
 		int joinFriendBase = (!CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
 		int leaveFriendBase = (CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && !CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
 		int bestHopSequence = (m.isHop() ? getClosestHopSequence(m.to, board) : 0);
+		int isHop = m.isHop() ? 1 : -1;
 		
 		int leavesFriendsAlone = 0;
 		
@@ -130,17 +131,21 @@ public class CCAIPlayer extends Player {
 		int joinFriendBaseWeight = 0;
 		int leaveFriendBaseWeight = 0;
 		int bestHopSequenceWeight = 5;
-		int leavesFriendsAloneWeight = 2;
+		int isHopWeight = progressWeight;
+		int leavesFriendsAloneWeight = -5;
 		
 		// If we are no longer in beginning game
 		if (board.getTurnsPlayed() > 100) {
-			progressWeight = 2;
-			joinFriendBaseWeight = 20;
+			progressWeight = 5;
+			joinFriendBaseWeight = 5;
 			removedWeight = 0;
 			leaveFriendBaseWeight = -5;
 			stillInBaseWeight = -1000;
 			bestHopSequenceWeight = 10;
-			leavesFriendsAloneWeight = board.getTurnsPlayed() / 40;
+			// We want to never leave friends unless we are very close to our base
+			if (manhattanDistance(m.to, GOAL_POINTS[playerID]) < 10) {
+				leavesFriendsAloneWeight = 0;
+			}
 		}
 		
 		return (progress * progressWeight) +
@@ -148,8 +153,9 @@ public class CCAIPlayer extends Player {
 				(stillInBase * stillInBaseWeight) +
 				(joinFriendBase * joinFriendBaseWeight) +
 				(leaveFriendBase * leaveFriendBaseWeight) + 
-				(bestHopSequence * bestHopSequenceWeight) + 
-				(leavesFriendsAlone * leavesFriendsAloneWeight);
+				(bestHopSequence * bestHopSequenceWeight) +
+				(leavesFriendsAlone * leavesFriendsAloneWeight) +
+				(isHop * isHopWeight);
 	}
     
     /**

@@ -45,6 +45,7 @@ implements BoardPanel.BoardPanelListener  {
                 "breakthrough.BTFixedPlayer", */
         "halma.CCRandomPlayer",
         "halma.CCAIPlayer",
+        "halma.CCMiniMaxPlayer",
         "halma.CCSimpleAIPlayer",
         "halma.CCManhattanOptimizerPlayer"};
     private static final int BOARD_SIZE = 400;
