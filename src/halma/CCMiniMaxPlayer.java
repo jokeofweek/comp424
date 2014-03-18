@@ -1,10 +1,15 @@
 package halma;
 
+import halma.minimax.BoardPointPair;
+import halma.minimax.CombinedMoveGenerator;
+import halma.minimax.MoveGenerator;
+
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +35,13 @@ public class CCMiniMaxPlayer extends Player {
     	{0,1},{1,1},{1,0},
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
+    private final static int[] NEXT_OPPONENT = {1, 3, 3, 1};
 
     public CCMiniMaxPlayer() { super("Minimaxin"); }
     public CCMiniMaxPlayer(String s) { super(s); }
     
     public Queue<CCMove> moveList = new LinkedList<>();
+    private int count = 0;
     
 	@Override
 	public Move chooseMove(Board theBoard) {
@@ -48,19 +55,18 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// Minimax
 		long initialTime = System.currentTimeMillis();
-		BoardPointPair pair = minimax(board, 2, playerID, null, null).getSecond();
-
-		// If the move isn't a hop, then simply apply it
-		if (!pair.getMove().isHop()) {
-			return pair.getMove();
-		}
+		BoardPointPair pair = minimax(board, 3, true,
+				new Pair<Integer,BoardPointPair>(Integer.MIN_VALUE, null),
+				new Pair<Integer,BoardPointPair>(Integer.MAX_VALUE, null)
+			).getSecond();
+		System.out.println("Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
 		
-		// If the move is a hop, then need to figure out sequence from initial to hop.
-		generateMoveSequence(board, pair.getInitial(), pair.getMove().to);
-		for (CCMove m : moveList) {
-			System.out.print(m.from + " ");
+		// If the move isn't a hop, then simply apply it
+		if (!pair.isHop()) {
+			return new CCMove(playerID, pair.getInitial(), pair.getDestination());
 		}
-		System.out.println();
+		// If the move is a hop, then need to figure out sequence from initial to hop.
+		generateMoveSequence(board, pair.getInitial(), pair.getDestination());
 		return moveList.remove();
 	}
 
@@ -68,34 +74,49 @@ public class CCMiniMaxPlayer extends Player {
 	public void movePlayed(Board board, Move move) {
 	}
 	
-	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, int playerID, Point from, Point to) {
+	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, boolean isMaximizing,
+			Pair<Integer, BoardPointPair> a, Pair<Integer, BoardPointPair> b) {
 		if (depth == 0 || startBoard.getWinner() != Board.NOBODY) {
-			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard, playerID, from, to), null);
+			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
 		}
 		
-		boolean isMaximizing = (playerID == this.playerID || playerID == FRIEND[this.playerID]);
-		Pair<Integer, BoardPointPair> bestValue;
 		Pair<Integer, BoardPointPair> val;
-		
-		if (isMaximizing) {
-			bestValue = new Pair<Integer, BoardPointPair>(Integer.MIN_VALUE, null);
-			for (BoardPointPair pair : generateBoards(startBoard, playerID)) {
-				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4, pair.getInitial(), pair.getMove().getTo());
-				if (val.getFirst() > bestValue.getFirst()) {
-					bestValue = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
-				}				
-			}
+		// If the board isn't player 1 or 3, don't need to use combined move generator
+		Iterator<BoardPointPair> iterator = null;
+		int depthDiff = 0;
+		if (startBoard.getTurn() == 0 || startBoard.getTurn() == 2 || depth == 1) {
+			iterator = new MoveGenerator(startBoard, startBoard.getTurn());
+			depthDiff = 1;
 		} else {
-			bestValue = new Pair<Integer, BoardPointPair>(Integer.MAX_VALUE, null);
-			for (BoardPointPair pair : generateBoards(startBoard, playerID)) {
-				val = minimax(pair.getBoard(), depth - 1, (playerID + 1) % 4, pair.getInitial(), pair.getMove().getTo());
-				if (val.getFirst() < bestValue.getFirst()) {
-					bestValue = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
+			iterator = new CombinedMoveGenerator(startBoard, startBoard.getTurn());
+			depthDiff = 2;
+		}
+
+		if (isMaximizing) {
+			while (iterator.hasNext()) {
+				BoardPointPair pair = iterator.next();
+				val = minimax(pair.getBoard(), depth - depthDiff, false, a, b);
+				if (val.getFirst() > a.getFirst()) {
+					a = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
+				}			
+				if (b.getFirst() <= a.getFirst()) {
+					break;
+				}
+			}
+			return a;
+		} else {
+			while (iterator.hasNext()) {
+				BoardPointPair pair = iterator.next();
+				val = minimax(pair.getBoard(), depth - depthDiff, true, a, b);
+				if (val.getFirst() < b.getFirst()) {
+					b = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
+				}
+				if (b.getFirst() <= a.getFirst()) {
+					break;
 				}
 			}			
+			return b;
 		}
-		
-		return bestValue;
 	}
 	
 	private void generateMoveSequence(CCBoard board, Point from, Point to) {
@@ -164,79 +185,13 @@ public class CCMiniMaxPlayer extends Player {
 			return second;
 		}
 	}
-	private class BoardPointPair {
-		private CCBoard board;
-		private Point initial;
-		private CCMove move;
-		public BoardPointPair(CCBoard board, Point initial, CCMove move) {
-			this.board = board;
-			this.initial = initial;
-			this.move = move;
-		}
-		public CCMove getMove() { return move; }
-		public CCBoard getBoard() { return board; }
-		public Point getInitial() { return initial; }
-	}
-	
-	public List<BoardPointPair> generateBoards(CCBoard startBoard, int player) {
-		List<BoardPointPair> boards = new LinkedList<>();
-		Queue<BoardPointPair> boardQueue = new LinkedList<>();
-		
-		// Cache where each initial point has been to avoid rehopping to a point
-		HashMap<Point, Set<Point>> hoppedPoints = new HashMap<>(10);
-		for (Point p : startBoard.getPieces(player)) {
-			hoppedPoints.put(p, (Set)new HashSet<>());
-		}
-		
-		// Initialize the queue
-		for (CCMove move: startBoard.getLegalMoves()) {
-			// Create the board with the hop and end
-			CCBoard b = (CCBoard)startBoard.clone();
-			b.move(move);
-			BoardPointPair p = new BoardPointPair(b, move.from, move);
-			
-			if (move.isHop()) {
-				boardQueue.add(p);
-				// Register the initial in the set of moves we've went to
-				// to avoid hopping back
-				hoppedPoints.get(move.from).add(move.from);
-			} else {
-				boards.add(p);
-			}	
-		}
-		
-		// Iterate through all possible hops
-		while (!boardQueue.isEmpty()) {
-			BoardPointPair pair = boardQueue.remove();
-			Point initial = pair.getInitial();
-			
-			for (CCMove m : pair.getBoard().getLegalMoves()) {
-				// Don't go to a move if it's been done before
-				if (m.to != null && m.from != null && !hoppedPoints.get(initial).contains(m.to)) {
-					//Clone the board with the move applied
-					CCBoard b = (CCBoard)pair.getBoard().clone();
-					b.move(m);
-					
-					// Add the board with the sequence over.
-					CCBoard b2 = (CCBoard)b.clone();
-					b2.move(new CCMove(player, null, null));
-					boards.add(new BoardPointPair(b2, initial, m));
-					
-					// Sequence of hop is still going, add it to the visited points and continue
-					hoppedPoints.get(initial).add(m.to);
-					boardQueue.add(new BoardPointPair(b, initial, m));
-				}
-			}
-		}
-		
-		return boards;		
-	}
 	
 	public int manhattanDistance(Point from, Point to) {
 		return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 	}
 	
-	public int evaluateBoard(CCBoard board, int player, Point from, Point to) {
+	public int evaluateBoard(CCBoard board) {
+		count++;
 		if (board.getWinner() == board.getTeamIndex(playerID)) {
 			return Integer.MAX_VALUE;
 		} else if (board.getWinner() == board.getTeamIndex(OPPONENT[playerID][0])) {
@@ -258,7 +213,7 @@ public class CCMiniMaxPlayer extends Player {
 			}
 		}
 		
-		return /*manhattanDistance(from, to) **/ (ownDistance - enemyDistance);
+		return (ownDistance - enemyDistance);
 	}
 		
 }
