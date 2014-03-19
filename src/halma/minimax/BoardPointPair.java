@@ -9,7 +9,8 @@ public class BoardPointPair {
 	private CCBoard board;
 	private Point initial;
 	private Point destination;
-
+	private int score;
+	
 	public BoardPointPair(CCBoard board, Point initial, Point destination) {
 		super();
 		this.board = board;

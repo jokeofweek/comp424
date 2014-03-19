@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * This lazily generates moves for one player.
@@ -21,7 +22,7 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 
 	private CCBoard startBoard;
 	private int player;
-	private Queue<BoardPointPair> boards = new LinkedList<>();
+	private Stack<BoardPointPair> boards = new Stack<BoardPointPair>();
 	private Queue<BoardPointPair> boardQueue = new LinkedList<>();
 	private HashMap<Point, Set<Point>> hoppedPoints = new HashMap<>(10);
 	
@@ -89,7 +90,7 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 	@Override
 	public BoardPointPair next() {
 		// Return the first board
-		return boards.remove();
+		return boards.pop();
 	}
 
 	@Override

@@ -38,14 +38,23 @@ public class CCMiniMaxPlayer extends Player {
     private final static int[] NEXT_OPPONENT = {1, 3, 3, 1};
     private final static int TIMEOUT = 800;
 
+	private final static Point[] BASE_POINTS = {new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
+		new Point(0,1), new Point(1,1), new Point(2,1), new Point(3,1),
+		new Point(0,2), new Point(1,2), new Point(2,2),
+		new Point(0,3), new Point(1,3)};
+	private final static HashSet<Point>[] BASES= initializeBases();
+	
     public CCMiniMaxPlayer() { super("Minimaxin"); }
     public CCMiniMaxPlayer(String s) { super(s); }
     
     public Queue<CCMove> moveList = new LinkedList<>();
     private int count = 0;
     
+    
+    
 	@Override
 	public Move chooseMove(Board theBoard) {
+		count = 0;
 		// Convert the board.
 		CCBoard board = (CCBoard) theBoard;
 
@@ -56,28 +65,66 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// Minimax
 		long initialTime = System.currentTimeMillis();
-		BoardPointPair pair = minimax(board, 3, System.currentTimeMillis(), true,
+		BoardPointPair pair = minimax(board, 2, System.currentTimeMillis(), true,
 				new Pair<Integer,BoardPointPair>(Integer.MIN_VALUE, null),
 				new Pair<Integer,BoardPointPair>(Integer.MAX_VALUE, null)
 			).getSecond();
 		System.out.println("Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
 		
+		// If we have no move, then simply get the first non-hop legal move and apply it.
+		if (pair == null || pair.getInitial() == null || pair.getDestination() == null) {
+			for (CCMove m : board.getLegalMoves()) {
+				if (!m.isHop()) {
+					return m;
+				}
+			}
+		}
+		
 		// If the move isn't a hop, then simply apply it
 		if (!pair.isHop()) {
 			return new CCMove(playerID, pair.getInitial(), pair.getDestination());
 		}
+		
+		
 		// If the move is a hop, then need to figure out sequence from initial to hop.
 		generateMoveSequence(board, pair.getInitial(), pair.getDestination());
+		System.out.print("Moves for " + playerID + ": ");
+		for (CCMove m : moveList) {
+			System.out.print(m.toPrettyString());
+		}
 		return moveList.remove();
 	}
 
+
+	/**
+	 * Generate a set of all points in the bases
+	 * @return a set of all points in the bases
+	 */
+	private static HashSet<Point>[] initializeBases() {
+		HashSet<Point>[] b= new HashSet[4];
+		for(int i=0; i<4; i++){
+			b[i] = new HashSet<Point>();
+			for(int j=0; j<BASE_POINTS.length; j++){
+				Point p= new Point( (i%2==0)?BASE_POINTS[j].x:CCBoard.SIZE-BASE_POINTS[j].x-1, 
+						((i>>1)%2==0)?BASE_POINTS[j].y:CCBoard.SIZE-BASE_POINTS[j].y-1);
+				b[i].add(p);
+			}
+		}
+
+		return b;
+	}
+	
 	@Override
 	public void movePlayed(Board board, Move move) {
 	}
 	
 	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
 			Pair<Integer, BoardPointPair> a, Pair<Integer, BoardPointPair> b) {
-		if (depth == 0 || startBoard.getWinner() != Board.NOBODY) {
+		if (depth == 0) {
+			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
+		}
+		if (startBoard.getWinner() != Board.NOBODY) {
+			System.out.println("WINNING");
 			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
 		}
 		
@@ -163,17 +210,21 @@ public class CCMiniMaxPlayer extends Player {
 			if (board.getPieceAt(hopPoint) == null) {
 				continue;
 			}
+			
 			Point newPoint = new Point(from.x + offset[0] * 2, from.y + offset[1] * 2);
 			// If in range, not visited, and empty
 			if (newPoint.x >= 0 && newPoint.y >= 0 && newPoint.x < 16 && newPoint.y < 16) {
 				if (board.getPieceAt(newPoint) == null && !visitedPoints.contains(newPoint)) {
-					visitedPoints.add(newPoint);
-					// Visit the point
-					points.add(newPoint);
-					if (generateMoveSequence(board, newPoint, to, visitedPoints, points)) {
-						return true;
+					// Test that if you are going out of the friend's base, which is illegal
+					if (!BASES[FRIEND[playerID]].contains(from) || BASES[FRIEND[playerID]].contains(newPoint)) {
+						visitedPoints.add(newPoint);
+						// Visit the point
+						points.add(newPoint);
+						if (generateMoveSequence(board, newPoint, to, visitedPoints, points)) {
+							return true;
+						}
+						points.remove(points.size() - 1);
 					}
-					points.remove(points.size() - 1);
 				}
 			}
 		}

@@ -87,7 +87,6 @@ public class CCBoard extends Board{
 			}
 		}
 
-
 		return b;
 	}
 
