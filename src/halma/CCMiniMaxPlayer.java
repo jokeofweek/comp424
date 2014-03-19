@@ -36,7 +36,7 @@ public class CCMiniMaxPlayer extends Player {
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
     private final static int[] NEXT_OPPONENT = {1, 3, 3, 1};
-    private final static int TIMEOUT = 800;
+    private final static int TIMEOUT = 900;
 
 	private final static Point[] BASE_POINTS = {new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
 		new Point(0,1), new Point(1,1), new Point(2,1), new Point(3,1),
