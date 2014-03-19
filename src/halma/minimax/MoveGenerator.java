@@ -91,6 +91,9 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 
 	@Override
 	public BoardPointPair next() {
+		if (!hasNext()) {
+			throw new RuntimeException();
+		}
 		// Return the first board
 		return boards.pop();
 	}

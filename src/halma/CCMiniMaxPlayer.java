@@ -3,9 +3,12 @@ package halma;
 import halma.minimax.BoardPointPair;
 import halma.minimax.CombinedMoveGenerator;
 import halma.minimax.MoveGenerator;
+import halma.minimax.features.AdjacentToBaseFeature;
+import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
+import halma.minimax.features.NotInOpposingBaseFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -43,24 +46,30 @@ public class CCMiniMaxPlayer extends Player {
      * The enabled features.
      */
     private List<Feature> features = Arrays.asList(
-    		(Feature)new ManhattanDistanceFeature(1.0),
-    		new LeaveBaseFeature(0.002)
+    		(Feature)new ManhattanDistanceFeature(0.8),
+    		new LeaveBaseFeature(0.002),
+    		new DontLeaveAloneFeature(0.01),
+    		new NotInOpposingBaseFeature(0.02),
+    		new AdjacentToBaseFeature(0.05) 
     );
     /**
      * The cached list of moves.
      */
     public Queue<CCMove> moveList = new LinkedList<>();
     private int count = 0;
-	
+	private CCBoard originalBoard;
+    
     public CCMiniMaxPlayer() { super("Minimaxin"); }
-    public CCMiniMaxPlayer(String s) { super(s); }   
+    public CCMiniMaxPlayer(String s) { super(s); }
+    
     
 	@Override
 	public Move chooseMove(Board theBoard) {
 		count = 0;
 		// Convert the board.
 		CCBoard board = (CCBoard) theBoard;
-
+		originalBoard = board;
+		
 		// If we still have queued moves remaining, run them
 		if (!moveList.isEmpty()) {
 			return moveList.remove();
@@ -266,7 +275,7 @@ public class CCMiniMaxPlayer extends Player {
 		// Sum up the result for all features
 		double result = 0;
 		for (Feature feature : features) {
-			result += (feature.getWeight(board, playerID) * feature.getScore(board, playerID));
+			result += (feature.getWeight(board, originalBoard, playerID) * feature.getScore(board, originalBoard, playerID));
 		}
 		
 		return result;

@@ -28,12 +28,12 @@ public class ManhattanDistanceFeature extends Feature {
 	}
 	
 	@Override
-	public double getWeight(CCBoard board, int playerID) {
+	public double getWeight(CCBoard board, CCBoard original, int playerID) {
 		return weight;
 	}
 	
 	@Override
-	public double getScore(CCBoard board, int playerID) {
+	public double getScore(CCBoard board, CCBoard original, int playerID) {
 		// For now just sum of your manhattan distance
 		int ownDistance = 0;
 		int enemyDistance = 0;

@@ -1,9 +1,9 @@
 package halma.minimax.features;
 
+import halma.CCBoard;
+
 import java.awt.Point;
 import java.util.HashSet;
-
-import halma.CCBoard;
 
 public abstract class Feature {
 	
@@ -14,6 +14,23 @@ public abstract class Feature {
 
 	public final static HashSet<Point>[] BASES = initializeBases();
 
+    public final static int[][] DIRECTIONAL_OFFSETS = {
+    	{0,1},{1,1},{1,0},
+    	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
+    };
+    
+    public static final int[][] PROGRESS_OFFSETS = {
+    	{0, 1}, {1, 1}, {1, 0}
+    };
+    
+    /**
+     * Given a progress offset, multiply x and y by corresponding values
+     * to get the progress directions for a given player.
+     */
+    public static final int[][] PLAYER_MULTIPLIERS = {
+    	{1, 1}, {-1,1}, {1, -1}, {-1, -1}
+    };
+            
 	/**
 	 * Generate a set of all points in the bases
 	 * @return a set of all points in the bases
@@ -32,8 +49,8 @@ public abstract class Feature {
 		return b;
 	}
 	
-	public abstract double getWeight(CCBoard board, int playerID);
-	public abstract double getScore(CCBoard board, int playerID);
+	public abstract double getWeight(CCBoard board, CCBoard original, int playerID);
+	public abstract double getScore(CCBoard board, CCBoard original, int playerID);
 	
 
 }

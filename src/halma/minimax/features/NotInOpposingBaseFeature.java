@@ -5,23 +5,23 @@ import java.util.HashSet;
 
 import halma.CCBoard;
 
-public class LeaveBaseFeature extends Feature {
-	private double weightPerTurn;
+public class NotInOpposingBaseFeature extends Feature {
+	private double weight;
 
-	public LeaveBaseFeature(double weightPerTurn) {
-		this.weightPerTurn = weightPerTurn;
+	public NotInOpposingBaseFeature(double weight) {
+		this.weight = weight;
 	}	
 	
 	@Override
 	public double getWeight(CCBoard board, CCBoard original, int playerID) {
-		return board.getTurnsPlayed() <= 100 ? board.getTurnsPlayed() * weightPerTurn : 0;
+		return weight;
 	}
 
 	@Override
 	public double getScore(CCBoard board, CCBoard original, int playerID) {
 		int piecesLeft = 0;
 		for (Point p : board.getPieces(playerID)) {
-			if (BASES[playerID].contains(p)) {
+			if (!BASES[playerID^3].contains(p)) {
 				piecesLeft++;
 			}
 		}
