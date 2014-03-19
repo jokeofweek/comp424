@@ -3,19 +3,19 @@ package halma;
 import halma.minimax.BoardPointPair;
 import halma.minimax.CombinedMoveGenerator;
 import halma.minimax.MoveGenerator;
+import halma.minimax.features.Feature;
+import halma.minimax.features.LeaveBaseFeature;
+import halma.minimax.features.ManhattanDistanceFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 
 import boardgame.Board;
 import boardgame.Move;
@@ -25,17 +25,11 @@ public class CCMiniMaxPlayer extends Player {
 	
 	private static final int[] FRIEND = {3,2,1,0};
 	private static final int[][] OPPONENT = {{1,2},{0,3},{0,3},{1,2}};
-	private final static Point[] GOAL_POINTS = {
-    	new Point(CCBoard.SIZE - 1, CCBoard.SIZE - 1),
-    	new Point(0, CCBoard.SIZE - 1),
-    	new Point(CCBoard.SIZE - 1, 0),
-    	new Point(0, 0)
-    };
     private final static int[][] DIRECTIONAL_OFFSETS = {
     	{0,1},{1,1},{1,0},
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
-    private final static int[] NEXT_OPPONENT = {1, 3, 3, 1};
+
     private final static int TIMEOUT = 900;
 
 	private final static Point[] BASE_POINTS = {new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
@@ -44,13 +38,22 @@ public class CCMiniMaxPlayer extends Player {
 		new Point(0,3), new Point(1,3)};
 	private final static HashSet<Point>[] BASES= initializeBases();
 	
-    public CCMiniMaxPlayer() { super("Minimaxin"); }
-    public CCMiniMaxPlayer(String s) { super(s); }
-    
+
+    /**
+     * The enabled features.
+     */
+    private List<Feature> features = Arrays.asList(
+    		(Feature)new ManhattanDistanceFeature(1.0),
+    		new LeaveBaseFeature(0.002)
+    );
+    /**
+     * The cached list of moves.
+     */
     public Queue<CCMove> moveList = new LinkedList<>();
     private int count = 0;
-    
-    
+	
+    public CCMiniMaxPlayer() { super("Minimaxin"); }
+    public CCMiniMaxPlayer(String s) { super(s); }   
     
 	@Override
 	public Move chooseMove(Board theBoard) {
@@ -65,11 +68,12 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// Minimax
 		long initialTime = System.currentTimeMillis();
+
 		BoardPointPair pair = minimax(board, 2, System.currentTimeMillis(), true,
-				new Pair<Integer,BoardPointPair>(Integer.MIN_VALUE, null),
-				new Pair<Integer,BoardPointPair>(Integer.MAX_VALUE, null)
+				new Pair<Double,BoardPointPair>(0.0 + Integer.MIN_VALUE, null),
+				new Pair<Double,BoardPointPair>(0.0 + Integer.MAX_VALUE, null)
 			).getSecond();
-		System.out.println("Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
+		System.out.println("Player " + playerID + ": Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
 		
 		// If we have no move, then simply get the first non-hop legal move and apply it.
 		if (pair == null || pair.getInitial() == null || pair.getDestination() == null) {
@@ -118,17 +122,16 @@ public class CCMiniMaxPlayer extends Player {
 	public void movePlayed(Board board, Move move) {
 	}
 	
-	public Pair<Integer, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
-			Pair<Integer, BoardPointPair> a, Pair<Integer, BoardPointPair> b) {
+	public Pair<Double, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
+			Pair<Double, BoardPointPair> a, Pair<Double, BoardPointPair> b) {
 		if (depth == 0) {
-			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
+			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
 		}
 		if (startBoard.getWinner() != Board.NOBODY) {
-			System.out.println("WINNING");
-			return new Pair<Integer, BoardPointPair>(evaluateBoard(startBoard), null);
+			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
 		}
 		
-		Pair<Integer, BoardPointPair> val;
+		Pair<Double, BoardPointPair> val;
 		// If the board isn't player 1 or 3, don't need to use combined move generator
 		Iterator<BoardPointPair> iterator = null;
 		int depthDiff = 0;
@@ -145,7 +148,7 @@ public class CCMiniMaxPlayer extends Player {
 				BoardPointPair pair = iterator.next();
 				val = minimax(pair.getBoard(), depth - depthDiff, startTime, false, a, b);
 				if (val.getFirst() > a.getFirst()) {
-					a = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
+					a = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
 				}			
 				if (b.getFirst() <= a.getFirst()) {
 					break;
@@ -159,9 +162,10 @@ public class CCMiniMaxPlayer extends Player {
 		} else {
 			while (iterator.hasNext()) {
 				BoardPointPair pair = iterator.next();
+				if (pair == null) throw new RuntimeException();
 				val = minimax(pair.getBoard(), depth - depthDiff, startTime, true, a, b);
 				if (val.getFirst() < b.getFirst()) {
-					b = new Pair<Integer, BoardPointPair>(val.getFirst(), pair);
+					b = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
 				}
 				if (b.getFirst() <= a.getFirst()) {
 					break;
@@ -250,30 +254,22 @@ public class CCMiniMaxPlayer extends Player {
 		return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 	}
 	
-	public int evaluateBoard(CCBoard board) {
+	public double evaluateBoard(CCBoard board) {
 		count++;
-		if (board.getWinner() == board.getTeamIndex(playerID)) {
+		// If someone is winning, return -Inf or +Inf
+		if (board.getWinner() == CCBoard.getTeamIndex(playerID)) {
 			return Integer.MAX_VALUE;
-		} else if (board.getWinner() == board.getTeamIndex(OPPONENT[playerID][0])) {
+		} else if (board.getWinner() == CCBoard.getTeamIndex(OPPONENT[playerID][0])) {
 			return Integer.MIN_VALUE;
 		}
 
-		// For now just sum of your manhattan distance
-		int ownDistance = 0;
-		int enemyDistance = 0;
-
-		for (int i = 0; i < 4; i++) {
-			for (Point p : board.getPieces(i)) {
-				int distance = 32 - manhattanDistance(p, GOAL_POINTS[i]);
-				if (i == playerID || i == FRIEND[playerID]) {
-					ownDistance += distance;
-				} else {
-					enemyDistance += distance;
-				}
-			}
+		// Sum up the result for all features
+		double result = 0;
+		for (Feature feature : features) {
+			result += (feature.getWeight(board, playerID) * feature.getScore(board, playerID));
 		}
 		
-		return (ownDistance - enemyDistance);
+		return result;
 	}
 		
 }

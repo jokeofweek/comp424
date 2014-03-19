@@ -58,8 +58,10 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 	
 	private void generateBoardsFromPair(BoardPointPair pair) {
 		Point initial = pair.getInitial();
-		
-		for (CCMove m : pair.getBoard().getLegalMoves()) {
+
+		ArrayList<CCMove> moves = pair.getBoard().getLegalMoves();
+		Collections.shuffle(moves);
+		for (CCMove m : moves) {
 			// Don't go to a move if it's been done before
 			if (m.getTo() != null && m.getFrom() != null && !hoppedPoints.get(initial).contains(m.getTo())) {
 				//Clone the board with the move applied

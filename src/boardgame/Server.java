@@ -69,7 +69,7 @@ public class Server implements Runnable {
     // Command line parameters
     private static int cmdArgPort = DEFAULT_PORT;
     private static int cmdArgTimeout = DEFAULT_TIMEOUT;
-    private static boolean cmdArgQuiet = false;
+    private static boolean cmdArgQuiet = true;
 
     // Parameters
     private int port = DEFAULT_PORT;
