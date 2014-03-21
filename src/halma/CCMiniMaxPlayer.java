@@ -45,13 +45,14 @@ public class CCMiniMaxPlayer extends Player {
     /**
      * The enabled features.
      */
-    private List<Feature> features = Arrays.asList(
+    protected List<Feature> features = Arrays.asList(
     		(Feature)new ManhattanDistanceFeature(0.8),
     		new LeaveBaseFeature(0.002),
     		new DontLeaveAloneFeature(0.01),
     		new NotInOpposingBaseFeature(0.02),
     		new AdjacentToBaseFeature(0.05) 
     );
+    
     /**
      * The cached list of moves.
      */
