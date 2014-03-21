@@ -16,7 +16,7 @@ public class CCBoard extends Board{
 	public final static int NUMBER_OF_PLAYERS=4;
 	public final static int SIZE = 16;
 
-	private static final int MAX_TURN=5000;
+	private static final int MAX_TURN=1000;
 	private static final int MAX_BASE_TURN=100;
 
 	private static final int[][] moves= {{1,1}, {1,0}, {1,-1}, {0,-1}, {-1,-1}, {-1,0}, {-1,1}, {0,1}};

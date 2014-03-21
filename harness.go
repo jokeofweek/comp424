@@ -7,30 +7,36 @@ import (
 	"time"
 )
 
-func runAndWaitFor(group *sync.WaitGroup, cmd *exec.Cmd) {
-	println("Starting command.")
+func runAndWaitFor(group *sync.WaitGroup, cmd *exec.Cmd, context string) {
+	println("Starting " + context)
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)
 	} else {
 		err = cmd.Wait()
-		println("Command done.")
+		println(context + " done.")
 	}
 	group.Done()
 }
 
 func runServer(group *sync.WaitGroup) {
 	cmd := exec.Command("ant", "bootstrap-server")
-	runAndWaitFor(group, cmd)
+	runAndWaitFor(group, cmd, "Server")
 }
 
 func runClient(group *sync.WaitGroup) {
 	cmd := exec.Command("ant", "bootstrap-client")
-	runAndWaitFor(group, cmd)
+	runAndWaitFor(group, cmd, "Client")
 }
 
 func main() {
     var group sync.WaitGroup
+
+    // Build the server
+	cmd := exec.Command("ant", "bootstrap-build")
+    group.Add(1)
+	runAndWaitFor(&group, cmd, "Build")
+
     group.Add(1)
 	go runServer(&group)
 
