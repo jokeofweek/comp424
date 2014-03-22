@@ -16,7 +16,9 @@ func runAndWaitFor(group *sync.WaitGroup, cmd *exec.Cmd, context string) {
 		err = cmd.Wait()
 		println(context + " done.")
 	}
-	group.Done()
+	if group != nil {
+		group.Done()
+	}
 }
 
 func runServer(group *sync.WaitGroup) {
@@ -30,22 +32,27 @@ func runClient(group *sync.WaitGroup) {
 }
 
 func main() {
-    var group sync.WaitGroup
 
-    // Build the server
+	// Build the server	
 	cmd := exec.Command("ant", "bootstrap-build")
-    group.Add(1)
-	runAndWaitFor(&group, cmd, "Build")
+	runAndWaitFor(nil, cmd, "Build")
 
-    group.Add(1)
-	go runServer(&group)
+	for {
+		var group sync.WaitGroup
 
-    time.Sleep(1000 * time.Millisecond)
-
-	for i := 0; i < 4; i++ {
 		group.Add(1)
-		go runClient(&group)
+		go runServer(&group)
+
+		time.Sleep(1000 * time.Millisecond)
+
+		for i := 0; i < 4; i++ {
+			group.Add(1)
+			go runClient(&group)
+		}
+		group.Wait()
+		println("Done")
+
+		time.Sleep(1000 * time.Millisecond)
+		println("Restarting")
 	}
-	group.Wait()
-	println("Done")
 }
