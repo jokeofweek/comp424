@@ -26,7 +26,7 @@ public class CCBoard extends Board{
 		new Point(0,2), new Point(1,2), new Point(2,2),
 		new Point(0,3), new Point(1,3)};
 
-	final static HashSet<Point>[] bases= initializeBases();
+	public final static HashSet<Point>[] bases= initializeBases();
 
 	private int turnNumber;
 	private int winner= NOBODY;
@@ -357,6 +357,14 @@ public class CCBoard extends Board{
 					moveList.add(move);
 			}
 		}
+	}
+	
+	/**
+	 * Get the last piece moved in the turn.
+	 * @return A point representing the last pieced moved. Null if called at the begining of a turn.
+	 */
+	public Point getLastMoved(){
+		return lastMovedInTurn;
 	}
 	
 	@Override
