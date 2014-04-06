@@ -48,7 +48,7 @@ implements BoardPanel.BoardPanelListener  {
         "halma.CCMiniMaxPlayer",
         "halma.CCSimpleAIPlayer",
         "halma.CCManhattanOptimizerPlayer",
-        "halma.CCMCTSPlayer"
+        "halma.CCMCTSPlayer",
         "halma.CCHeuristicPlayer",
         "halma.CCMCTSPlayer",
         "halma.CCSimulatedAnnealingPlayer"};
