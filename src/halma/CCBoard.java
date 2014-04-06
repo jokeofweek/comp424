@@ -26,23 +26,25 @@ public class CCBoard extends Board{
 		new Point(0,2), new Point(1,2), new Point(2,2),
 		new Point(0,3), new Point(1,3)};
 
-	final static HashSet<Point>[] bases= initializeBases();
+	public final static HashSet<Point>[] bases= initializeBases();
 
 	private int turnNumber;
 	private int winner= NOBODY;
 	private int turn_player;
 	private Point lastMovedInTurn;
+	private HashSet<Point> lastPoints = new HashSet<Point>();
 	public HashMap<Point, Integer> board= new HashMap<Point, Integer>(40);
 
 
 	private CCBoard(HashMap<Point, Integer> board, int turnNumber, int winner,
-			int turn_player, Point lastMovedInTurn) {
+			int turn_player, Point lastMovedInTurn, HashSet<Point> lastPoints) {
 		super();
 		this.board = board;
 		this.turnNumber = turnNumber;
 		this.winner = winner;
 		this.turn_player = turn_player;
 		this.lastMovedInTurn = lastMovedInTurn;
+		this.lastPoints = lastPoints;
 	}
 
 
@@ -99,7 +101,7 @@ public class CCBoard extends Board{
 	private boolean checkIfInBase(int player_id, int base_id){
 		boolean in=false;
 		Integer IDInteger= new Integer(player_id);
-		for(Point p: bases[player_id]){
+		for(Point p: bases[base_id]){
 			in |= IDInteger.equals(board.get(p));
 		}
 		return in;
@@ -178,6 +180,7 @@ public class CCBoard extends Board{
 				board.remove(ccm.from);
 				board.put(ccm.to, ccm.player_id);
 				lastMovedInTurn= ccm.to;
+				lastPoints.add(ccm.from);
 			}
 		}else{
 			throw new IllegalArgumentException("Invalid move sent: "+ ccm.toPrettyString());
@@ -192,6 +195,7 @@ public class CCBoard extends Board{
 				turnNumber++;
 			turn_player=(turn_player+1)%4;
 			lastMovedInTurn=null;
+			lastPoints.clear();
 		}
 	}
 
@@ -218,7 +222,7 @@ public class CCBoard extends Board{
 
 	@Override
 	public Object clone() {
-		return new CCBoard((HashMap<Point, Integer>) board.clone(), turnNumber, winner, turn_player, lastMovedInTurn);
+		return new CCBoard((HashMap<Point, Integer>) board.clone(), turnNumber, winner, turn_player, lastMovedInTurn, (HashSet<Point>) lastPoints.clone());
 	}
 
 	/** get the player_id of the piece at a given position. 
@@ -267,6 +271,9 @@ public class CCBoard extends Board{
 		legal &= board.containsKey(m.from);
 		if(legal)
 			legal &= board.get(m.from).intValue() == m.player_id;
+		
+		// check if the piece is hoping back to a position it has been before
+		legal &= !lastPoints.contains(m.to);
 
 		// check if the position to move to is empty
 		legal &= !board.containsKey(m.to);
@@ -356,6 +363,14 @@ public class CCBoard extends Board{
 					moveList.add(move);
 			}
 		}
+	}
+	
+	/**
+	 * Get the last piece moved in the turn.
+	 * @return A point representing the last pieced moved. Null if called at the begining of a turn.
+	 */
+	public Point getLastMoved(){
+		return lastMovedInTurn;
 	}
 	
 	@Override
