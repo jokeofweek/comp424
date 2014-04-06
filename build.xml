@@ -50,7 +50,7 @@
        failonerror="true"
        maxmemory="512m"
        >
-      <arg line="halma.CCAIPlayer ${local_ip} ${local_port}"/>
+      <arg line="halma.CCMiniMaxPlayer ${local_ip} ${local_port}"/>
       <classpath>
         <pathelement location="${dist}/projectsrc-${TSTAMP}.jar"/>
         <pathelement path="${java.class.path}"/>

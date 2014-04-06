@@ -18,13 +18,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 
 import boardgame.Board;
 import boardgame.Move;
 import boardgame.Player;
 
-public class CCMiniMaxPlayer extends Player {
+public class CCHeuristicPlayer extends Player {
 	
 	private static final int[] FRIEND = {3,2,1,0};
 	private static final int[][] OPPONENT = {{1,2},{0,3},{0,3},{1,2}};
@@ -32,8 +33,6 @@ public class CCMiniMaxPlayer extends Player {
     	{0,1},{1,1},{1,0},
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
-
-    private final static int TIMEOUT = 900;
 
 	private final static Point[] BASE_POINTS = {new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
 		new Point(0,1), new Point(1,1), new Point(2,1), new Point(3,1),
@@ -62,8 +61,8 @@ public class CCMiniMaxPlayer extends Player {
     private int count = 0;
 	private CCBoard originalBoard;
     
-    public CCMiniMaxPlayer() { super("Minimaxin"); }
-    public CCMiniMaxPlayer(String s) { super(s); }
+    public CCHeuristicPlayer() { super("Heuristic"); }
+    public CCHeuristicPlayer(String s) { super(s); }
     
     
 	@Override
@@ -73,19 +72,42 @@ public class CCMiniMaxPlayer extends Player {
 		CCBoard board = (CCBoard) theBoard;
 		originalBoard = board;
 		
+		
 		// If we still have queued moves remaining, run them
 		if (!moveList.isEmpty()) {
 			return moveList.remove();
 		}
 		
-		// Minimax
-		long initialTime = System.currentTimeMillis();
-
-		BoardPointPair pair = minimax(board, 2, System.currentTimeMillis(), true,
-				new Pair<Double,BoardPointPair>(0.0 + Integer.MIN_VALUE, null),
-				new Pair<Double,BoardPointPair>(0.0 + Integer.MAX_VALUE, null)
-			).getSecond();
-		System.out.println("Player " + playerID + ": Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
+		// Time a single rollout
+		long endTime = System.currentTimeMillis() + 800;
+		Random r = new Random();
+		int rollouts = 0;
+		while (endTime > System.currentTimeMillis()) {
+			CCBoard rolloutBoard = (CCBoard) board.clone();
+			while (rolloutBoard.getWinner() == Board.NOBODY) {
+				List<CCMove> moves = rolloutBoard.getLegalMoves();
+				rolloutBoard.move(moves.get(r.nextInt(moves.size())));
+			}
+			rollouts++;
+		}
+		System.out.println("Performed " + rollouts + " rollouts.");
+		
+		// Get the best move
+		Pair<Double, BoardPointPair> best = new Pair<Double,BoardPointPair>(0.0 + Integer.MIN_VALUE, null);
+		Iterator<BoardPointPair> iterator = new MoveGenerator(originalBoard, playerID);
+		int count = 0;
+		while (iterator.hasNext()) {
+			BoardPointPair current = iterator.next();
+			count++;
+			double score = evaluateBoard(current.getBoard());
+			if (score > best.first) {
+				best = new Pair<Double, BoardPointPair>(score, current);
+			}
+		}
+		System.out.println("Total moves: " + count);
+		System.out.println("Rollouts/move: " + rollouts /  (count + 0.0) );
+		
+		BoardPointPair pair = best.second;
 		
 		// If we have no move, then simply get the first non-hop legal move and apply it.
 		if (pair == null || pair.getInitial() == null || pair.getDestination() == null) {
@@ -104,10 +126,6 @@ public class CCMiniMaxPlayer extends Player {
 		
 		// If the move is a hop, then need to figure out sequence from initial to hop.
 		generateMoveSequence(board, pair.getInitial(), pair.getDestination());
-		System.out.print("Moves for " + playerID + ": ");
-		for (CCMove m : moveList) {
-			System.out.print(m.toPrettyString());
-		}
 		return moveList.remove();
 	}
 
@@ -132,63 +150,6 @@ public class CCMiniMaxPlayer extends Player {
 	
 	@Override
 	public void movePlayed(Board board, Move move) {
-	}
-	
-	public Pair<Double, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
-			Pair<Double, BoardPointPair> a, Pair<Double, BoardPointPair> b) {
-		if (depth == 0) {
-			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
-		}
-		if (startBoard.getWinner() != Board.NOBODY) {
-			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
-		}
-		
-		Pair<Double, BoardPointPair> val;
-		// If the board isn't player 1 or 3, don't need to use combined move generator
-		Iterator<BoardPointPair> iterator = null;
-		int depthDiff = 0;
-		if (startBoard.getTurn() == 0 || startBoard.getTurn() == 2 || depth == 1) {
-			iterator = new MoveGenerator(startBoard, startBoard.getTurn());
-			depthDiff = 1;
-		} else {
-			iterator = new CombinedMoveGenerator(startBoard, startBoard.getTurn());
-			depthDiff = 2;
-		}
-
-		if (isMaximizing) {
-			while (iterator.hasNext()) {
-				BoardPointPair pair = iterator.next();
-				val = minimax(pair.getBoard(), depth - depthDiff, startTime, false, a, b);
-				if (val.getFirst() > a.getFirst()) {
-					a = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
-				}			
-				if (b.getFirst() <= a.getFirst()) {
-					break;
-				}
-				// Timeout
-				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					break;
-				}
-			}
-			return a;
-		} else {
-			while (iterator.hasNext()) {
-				BoardPointPair pair = iterator.next();
-				if (pair == null) throw new RuntimeException();
-				val = minimax(pair.getBoard(), depth - depthDiff, startTime, true, a, b);
-				if (val.getFirst() < b.getFirst()) {
-					b = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
-				}
-				if (b.getFirst() <= a.getFirst()) {
-					break;
-				}
-				// Timeout
-				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					break;
-				}
-			}			
-			return b;
-		}
 	}
 	
 	private void generateMoveSequence(CCBoard board, Point from, Point to) {

@@ -48,7 +48,10 @@ implements BoardPanel.BoardPanelListener  {
         "halma.CCMiniMaxPlayer",
         "halma.CCSimpleAIPlayer",
         "halma.CCManhattanOptimizerPlayer",
-        "halma.CCMCTSPlayer"};
+        "halma.CCMCTSPlayer"
+        "halma.CCHeuristicPlayer",
+        "halma.CCMCTSPlayer",
+        "halma.CCSimulatedAnnealingPlayer"};
     private static final int BOARD_SIZE = 400;
     private static final int LIST_WIDTH = 280;
     

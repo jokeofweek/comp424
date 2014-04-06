@@ -30,6 +30,7 @@ public class CCSimulatedAnnealingPlayer extends Player {
     		new AdjacentToBaseFeature(0.05) 
     );
 
+    private static final int TOTAL_TIME_ALLOWED = 200;
 	private static final int[][] OPPONENT = {{1,2},{0,3},{0,3},{1,2}};
 	private Random random = new Random();
 	private CCBoard originalBoard;
@@ -41,6 +42,7 @@ public class CCSimulatedAnnealingPlayer extends Player {
 
 	@Override
 	public Move chooseMove(Board board) {
+		long maximumTime = System.currentTimeMillis() + TOTAL_TIME_ALLOWED;
 		// If we have moves left in the queue, play those
 		if (!moveQueue.isEmpty()) {
 			return moveQueue.removeFirst();
@@ -54,7 +56,7 @@ public class CCSimulatedAnnealingPlayer extends Player {
 		Pair<Double, LinkedList<CCMove>> current;
 		
 		int totalMoves = legalMoves.size();
-		for (int i = 0; i < 25; i++) {
+		while (System.currentTimeMillis() < maximumTime) {
 			// Pick a random move
 			CCMove firstMove = legalMoves.get(random.nextInt(totalMoves));
 			// Apply the move
