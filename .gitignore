@@ -2,4 +2,5 @@ jar/*
 bin/*
 .classpath
 .project
+.settings/*
 logs/*
