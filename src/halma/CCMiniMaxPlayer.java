@@ -33,8 +33,6 @@ public class CCMiniMaxPlayer extends Player {
     	{0,-1},{1,-1},{-1, -1},{-1,1},{-1,0}
     };
 
-    private final static int TIMEOUT = 900;
-
 	private final static Point[] BASE_POINTS = {new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
 		new Point(0,1), new Point(1,1), new Point(2,1), new Point(3,1),
 		new Point(0,2), new Point(1,2), new Point(2,2),
@@ -60,7 +58,6 @@ public class CCMiniMaxPlayer extends Player {
      */
     public Queue<CCMove> moveList = new LinkedList<>();
     private int count = 0;
-	private CCBoard originalBoard;
     
     public CCMiniMaxPlayer() { super("Minimaxin"); }
     public CCMiniMaxPlayer(String s) { super(s); }
@@ -71,21 +68,17 @@ public class CCMiniMaxPlayer extends Player {
 		count = 0;
 		// Convert the board.
 		CCBoard board = (CCBoard) theBoard;
-		originalBoard = board;
 		
 		// If we still have queued moves remaining, run them
 		if (!moveList.isEmpty()) {
 			return moveList.remove();
 		}
 		
-		// Minimax
-		long initialTime = System.currentTimeMillis();
-
-		BoardPointPair pair = minimax(board, 2, System.currentTimeMillis(), true,
+		BoardPointPair pair = minimax(board, board, 2, true,
 				new Pair<Double,BoardPointPair>(0.0 + Integer.MIN_VALUE, null),
-				new Pair<Double,BoardPointPair>(0.0 + Integer.MAX_VALUE, null)
+				new Pair<Double,BoardPointPair>(0.0 + Integer.MAX_VALUE, null),
+				playerID
 			).getSecond();
-		System.out.println("Player " + playerID + ": Evaluated " + count + " in " + (System.currentTimeMillis() - initialTime));
 		
 		// If we have no move, then simply get the first non-hop legal move and apply it.
 		if (pair == null || pair.getInitial() == null || pair.getDestination() == null) {
@@ -134,13 +127,13 @@ public class CCMiniMaxPlayer extends Player {
 	public void movePlayed(Board board, Move move) {
 	}
 	
-	public Pair<Double, BoardPointPair> minimax(CCBoard startBoard, int depth, long startTime, boolean isMaximizing,
-			Pair<Double, BoardPointPair> a, Pair<Double, BoardPointPair> b) {
+	public Pair<Double, BoardPointPair> minimax(CCBoard startBoard, CCBoard originalBoard, int depth, boolean isMaximizing,
+			Pair<Double, BoardPointPair> a, Pair<Double, BoardPointPair> b, int context) {
 		if (depth == 0) {
-			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
+			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard, originalBoard, context), null);
 		}
 		if (startBoard.getWinner() != Board.NOBODY) {
-			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard), null);
+			return new Pair<Double, BoardPointPair>(evaluateBoard(startBoard, originalBoard, context), null);
 		}
 		
 		Pair<Double, BoardPointPair> val;
@@ -158,15 +151,11 @@ public class CCMiniMaxPlayer extends Player {
 		if (isMaximizing) {
 			while (iterator.hasNext()) {
 				BoardPointPair pair = iterator.next();
-				val = minimax(pair.getBoard(), depth - depthDiff, startTime, false, a, b);
+				val = minimax(pair.getBoard(), originalBoard, depth - depthDiff, false, a, b, context);
 				if (val.getFirst() > a.getFirst()) {
 					a = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
 				}			
 				if (b.getFirst() <= a.getFirst()) {
-					break;
-				}
-				// Timeout
-				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					break;
 				}
 			}
@@ -175,15 +164,11 @@ public class CCMiniMaxPlayer extends Player {
 			while (iterator.hasNext()) {
 				BoardPointPair pair = iterator.next();
 				if (pair == null) throw new RuntimeException();
-				val = minimax(pair.getBoard(), depth - depthDiff, startTime, true, a, b);
+				val = minimax(pair.getBoard(), originalBoard, depth - depthDiff, true, a, b, context);
 				if (val.getFirst() < b.getFirst()) {
 					b = new Pair<Double, BoardPointPair>(val.getFirst(), pair);
 				}
 				if (b.getFirst() <= a.getFirst()) {
-					break;
-				}
-				// Timeout
-				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					break;
 				}
 			}			
@@ -247,7 +232,7 @@ public class CCMiniMaxPlayer extends Player {
 		return false;
 	}
 	
-	private class Pair<A, B> {
+	public class Pair<A, B> {
 		private A first;
 		private B second;
 		public Pair(A a, B b) {
@@ -266,22 +251,29 @@ public class CCMiniMaxPlayer extends Player {
 		return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
 	}
 	
-	public double evaluateBoard(CCBoard board) {
+	public double evaluateBoard(CCBoard board, CCBoard originalBoard, int context) {
 		count++;
 		// If someone is winning, return -Inf or +Inf
-		if (board.getWinner() == CCBoard.getTeamIndex(playerID)) {
+		if (board.getWinner() == CCBoard.getTeamIndex(context)) {
 			return Integer.MAX_VALUE;
-		} else if (board.getWinner() == CCBoard.getTeamIndex(OPPONENT[playerID][0])) {
+		} else if (board.getWinner() == CCBoard.getTeamIndex(OPPONENT[context][0])) {
 			return Integer.MIN_VALUE;
 		}
 
 		// Sum up the result for all features
 		double result = 0;
 		for (Feature feature : features) {
-			result += (feature.getWeight(board, originalBoard, playerID) * feature.getScore(board, originalBoard, playerID));
+			result += (feature.getWeight(board, originalBoard, context) * feature.getScore(board, originalBoard, context));
 		}
 		
 		return result;
 	}
 		
+	public void setPlayerID(int playerID) {
+		this.playerID = playerID;
+	}
+	
+	public boolean hasQueuedMoves() {
+		return !moveList.isEmpty();
+	}
 }

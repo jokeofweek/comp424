@@ -46,6 +46,10 @@ public class MoveGenerator implements Iterator<BoardPointPair>
 			
 			if (move.isHop()) {
 				boardQueue.add(p);
+				// Add the board which ends after 1 hop.
+				BoardPointPair temp = new BoardPointPair((CCBoard)b.clone(), move.getFrom(), move.getTo());
+				temp.getBoard().move(new CCMove(player, null, null));
+				boards.add(temp);
 				// Register the initial in the set of moves we've went to
 				// to avoid hopping back
 				hoppedPoints.get(move.getFrom()).add(move.getTo());
