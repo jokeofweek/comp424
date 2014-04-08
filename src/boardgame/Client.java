@@ -14,7 +14,7 @@ import java.net.Socket;
 public class Client implements Runnable {
     protected static final String DEFAULT_SERVER = "localhost";
     protected static final int DEFAULT_PORT = Server.DEFAULT_PORT;
-    protected static final String DEFAULT_PLAYER = "halma.CCHumanPlayer";
+    protected static final String DEFAULT_PLAYER = "halma.CCMiniMaxPlayer";
     protected static final boolean DBGNET = false;
     
     private Socket socket;

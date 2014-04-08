@@ -33,8 +33,12 @@ public class CCMCTSPlayer extends Player {
 	private static int BEGINNING_GAME_PIECES = 0;
 	 // When >= this many pieces are in the goal zone, consider it as end game.
 	private static int END_GAME_PIECES = 10;
-	private static double EXPLORATION_PARAMETER = Math.sqrt(1.5);
+	private static double EXPLORATION_PARAMETER = Math.sqrt(2);
 	private static double RANDOM_MOVE_PROBABILITY = 0.10;
+	// Assign points depending on result of evaluation function.
+	private static double[] SCORE_LEVELS = {5000, 100, 0, -0.5, -1, -100};
+	// Number of points to reward for each score level (1 extra for last level)
+	private static int[] SCORE_REWARDS = {1000, 10, 3, 1, -1, -4, -1000};
 
 	// Agent variables
 	private Random random;
@@ -185,7 +189,7 @@ public class CCMCTSPlayer extends Player {
 
 		private List<MoveNode> children;
 		public int simulations;
-		public double points;
+		public int points;
 		public double heuristic;
 
 		/**
@@ -220,12 +224,15 @@ public class CCMCTSPlayer extends Player {
 			// will be the most promising child.
 			MoveNode bestNode = null;
 			int best = Integer.MIN_VALUE;
+			String content = "";
 			for (MoveNode child : children) {
+				content += child.points + "/" + child.simulations + ", ";
 				if (child.simulations > best) {
 					best = child.simulations;
 					bestNode = child;
 				}
 			}
+			System.out.println(content);
 			return bestNode;
 		}
 
@@ -244,7 +251,7 @@ public class CCMCTSPlayer extends Player {
 			if (!current.isLeaf()) {
 				current = current.selection();
 			}
-			double win = current.simulation();
+			int win = current.simulation();
 			// Simulate a game and then backpropagate
 			current.propagation(win);
 		}
@@ -310,7 +317,7 @@ public class CCMCTSPlayer extends Player {
 		 * 
 		 * @return Points for the game
 		 */
-		private double simulation() {
+		private int simulation() {
 			CCBoard gameBoard = (CCBoard) pair.getBoard().clone();
 
 			// Do a heavy playout by generating all moves and picking the one
@@ -330,7 +337,14 @@ public class CCMCTSPlayer extends Player {
 			}
 
 			// Return the board heuristic value.
-			return 1 + evaluateBoard(gameBoard, pair.getBoard(), playerID);
+			double score = evaluateBoard(gameBoard, pair.getBoard(), playerID);
+			for (int i = 0; i < SCORE_LEVELS.length; i++) {
+				if (score >= SCORE_LEVELS[i]) {
+					return SCORE_REWARDS[i];
+				}
+			}
+			// Didn't return a score, so must be on the last level.
+			return SCORE_REWARDS[SCORE_REWARDS.length - 1];
 			//return (gameBoard.getWinner() == gameBoard.getTeamIndex(playerID)) ? 1
 			//		: ((gameBoard.getWinner() == Board.DRAW) ? 0 : -1);
 		}
@@ -390,7 +404,7 @@ public class CCMCTSPlayer extends Player {
 		 * @param points
 		 *            Points associated with a game
 		 */
-		private void propagation(double points) {
+		private void propagation(int points) {
 			// Iterate through parents until we get to null, backpropagating the
 			// value
 			MoveNode node = this;
@@ -473,11 +487,11 @@ public class CCMCTSPlayer extends Player {
 	
 
 	public double evaluateBoard(CCBoard board, CCBoard originalBoard, int context) {
-		// If someone is winning, return -Inf or +Inf
+		// If someone is winning, return extra large score.
 		if (board.getWinner() == CCBoard.getTeamIndex(context)) {
-			return 100;
+			return 10000;
 		} else if (board.getWinner() != CCBoard.NOBODY && board.getWinner() != CCBoard.DRAW) {
-			return -100;
+			return -10000;
 		}
 
 		// Sum up the result for all features

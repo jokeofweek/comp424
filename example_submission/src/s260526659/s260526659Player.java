@@ -1,15 +1,17 @@
-package halma;
+package s260526659;
 
-import halma.minimax.BoardPointPair;
-import halma.minimax.CombinedMoveGenerator;
-import halma.minimax.MoveGenerator;
-import halma.minimax.features.AdjacentToBaseFeature;
-import halma.minimax.features.DontLeaveAloneFeature;
-import halma.minimax.features.Feature;
-import halma.minimax.features.HuddleFeature;
-import halma.minimax.features.LeaveBaseFeature;
-import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.CCBoard;
+import halma.CCMove;
+import s260526659.minimax.BoardPointPair;
+import s260526659.minimax.CombinedMoveGenerator;
+import s260526659.minimax.MoveGenerator;
+import s260526659.minimax.features.AdjacentToBaseFeature;
+import s260526659.minimax.features.DontLeaveAloneFeature;
+import s260526659.minimax.features.Feature;
+import s260526659.minimax.features.HuddleFeature;
+import s260526659.minimax.features.LeaveBaseFeature;
+import s260526659.minimax.features.ManhattanDistanceFeature;
+import s260526659.minimax.features.NotInOpposingBaseFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import boardgame.Board;
 import boardgame.Move;
 import boardgame.Player;
 
-public class CCMiniMaxPlayer extends Player {
+public class s260526659Player extends Player {
 	
 	private static final int[] FRIEND = {3,2,1,0};
 	private static final int[][] OPPONENT = {{1,2},{0,3},{0,3},{1,2}};
@@ -61,12 +63,12 @@ public class CCMiniMaxPlayer extends Player {
     public Queue<CCMove> moveList = new LinkedList<>();
     private int count = 0;
     
-    public CCMiniMaxPlayer(String name, List<Feature> features) {
+    public s260526659Player(String name, List<Feature> features) {
     	super(name);
     	this.features = features;
     }
-    public CCMiniMaxPlayer() { super("Minimaxin"); }
-    public CCMiniMaxPlayer(String s) { super(s); }
+    public s260526659Player() { super("Minimaxin"); }
+    public s260526659Player(String s) { super(s); }
     
     public void setFeatures(List<Feature> features) {
 		this.features = features;
