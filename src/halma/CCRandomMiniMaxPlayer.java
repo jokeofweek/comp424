@@ -5,7 +5,7 @@ import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.minimax.features.NotInGoalZoneFeature;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -32,7 +32,7 @@ public class CCRandomMiniMaxPlayer extends CCMiniMaxPlayer {
 	    	(Feature)new ManhattanDistanceFeature(manhattanWeight),
 			new LeaveBaseFeature(leaveBaseWeight),
 			new DontLeaveAloneFeature(dontLeaveAloneWeight),
-			new NotInOpposingBaseFeature(notInOpposingWeight),
+			new NotInGoalZoneFeature(notInOpposingWeight),
 			new AdjacentToBaseFeature(adjacentToBaseWeight)
     	);
     	

@@ -5,7 +5,7 @@ import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.minimax.features.NotInGoalZoneFeature;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -26,7 +26,7 @@ public class CCSimulatedAnnealingPlayer extends Player {
     		(Feature)new ManhattanDistanceFeature(0.8),
     		new LeaveBaseFeature(0.002),
     		new DontLeaveAloneFeature(0.01),
-    		new NotInOpposingBaseFeature(0.02),
+    		new NotInGoalZoneFeature(0.02),
     		new AdjacentToBaseFeature(0.05) 
     );
 

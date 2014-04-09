@@ -4,6 +4,10 @@ import halma.CCBoard;
 
 import java.awt.Point;
 
+/**
+ * This represents a board as well as a starting piece and the point where
+ * the piece ended at.
+ */
 public class BoardPointPair {
 	
 	private CCBoard board;
@@ -35,7 +39,6 @@ public class BoardPointPair {
 	public void setInitial(Point initial) {
 		this.initial = initial;
 	}
-	
 	public boolean isHop() {
 		return Math.abs(initial.x - destination.x) > 1 || Math.abs(initial.y - destination.y) > 1;
 	}

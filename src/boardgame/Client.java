@@ -12,9 +12,9 @@ import java.net.Socket;
  * Player subclass instead.
  */
 public class Client implements Runnable {
-    protected static final String DEFAULT_SERVER = "localhost";
+    protected static final String DEFAULT_SERVER = "142.157.144.13";
     protected static final int DEFAULT_PORT = Server.DEFAULT_PORT;
-    protected static final String DEFAULT_PLAYER = "halma.CCMiniMaxPlayer";
+    protected static final String DEFAULT_PLAYER = "s260526659.s260526659Player";
     protected static final boolean DBGNET = false;
     
     private Socket socket;

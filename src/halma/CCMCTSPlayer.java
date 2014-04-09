@@ -3,12 +3,14 @@ package halma;
 import halma.minimax.BoardPointPair;
 import halma.minimax.MoveGenerator;
 import halma.minimax.features.AdjacentToBaseFeature;
+import halma.minimax.features.AvoidOpponentBaseFeature;
+import halma.minimax.features.DontBlockFriendFeature;
 import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.HuddleFeature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.minimax.features.NotInGoalZoneFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -28,12 +30,12 @@ public class CCMCTSPlayer extends Player {
 
 	// Agent configuration
 	private static long TIMEOUT = 800;
-	private static int ROLLOUT_MOVES = 10;
+	private static int ROLLOUT_MOVES = 7;
 	// When <= this many pieces are in the goal zone, consider it as beginning game.
 	private static int BEGINNING_GAME_PIECES = 0;
 	 // When >= this many pieces are in the goal zone, consider it as end game.
 	private static int END_GAME_PIECES = 10;
-	private static double EXPLORATION_PARAMETER = Math.sqrt(2);
+	private static double EXPLORATION_PARAMETER = Math.sqrt(3);
 	private static double RANDOM_MOVE_PROBABILITY = 0.10;
 	// Assign points depending on result of evaluation function.
 	private static double[] SCORE_LEVELS = {5000, 100, 0, -0.5, -1, -100};
@@ -49,10 +51,13 @@ public class CCMCTSPlayer extends Player {
     		(Feature)new ManhattanDistanceFeature(0.9),
     		new LeaveBaseFeature(0.002),
     		new DontLeaveAloneFeature(0.005),
-    		new NotInOpposingBaseFeature(0.015),
+    		new NotInGoalZoneFeature(0.015),
     		new AdjacentToBaseFeature(0.05),
-    		new HuddleFeature(0.25)
+    		new HuddleFeature(0.40),
+    		new AvoidOpponentBaseFeature(0.25),
+    		new DontBlockFriendFeature()
     );
+    
     
 	// Static variables
 	private static final int[] FRIEND = { 3, 2, 1, 0 };
@@ -189,7 +194,7 @@ public class CCMCTSPlayer extends Player {
 
 		private List<MoveNode> children;
 		public int simulations;
-		public int points;
+		public double points;
 		public double heuristic;
 
 		/**
@@ -251,9 +256,9 @@ public class CCMCTSPlayer extends Player {
 			if (!current.isLeaf()) {
 				current = current.selection();
 			}
-			int win = current.simulation();
+			double points = current.simulation();
 			// Simulate a game and then backpropagate
-			current.propagation(win);
+			current.propagation(points);
 		}
 
 		/**
@@ -283,7 +288,7 @@ public class CCMCTSPlayer extends Player {
 		private MoveNode selection() {
 			// Go through the children, finding the one with the best value
 			MoveNode bestNode = null;
-			double best = -1000.0;
+			double best = -1000000.0;
 			double current;
 			for (MoveNode child : children) {
 				current = child.evaluate();
@@ -317,7 +322,7 @@ public class CCMCTSPlayer extends Player {
 		 * 
 		 * @return Points for the game
 		 */
-		private int simulation() {
+		private double simulation() {
 			CCBoard gameBoard = (CCBoard) pair.getBoard().clone();
 
 			// Do a heavy playout by generating all moves and picking the one
@@ -338,13 +343,7 @@ public class CCMCTSPlayer extends Player {
 
 			// Return the board heuristic value.
 			double score = evaluateBoard(gameBoard, pair.getBoard(), playerID);
-			for (int i = 0; i < SCORE_LEVELS.length; i++) {
-				if (score >= SCORE_LEVELS[i]) {
-					return SCORE_REWARDS[i];
-				}
-			}
-			// Didn't return a score, so must be on the last level.
-			return SCORE_REWARDS[SCORE_REWARDS.length - 1];
+			return 1 + score;
 			//return (gameBoard.getWinner() == gameBoard.getTeamIndex(playerID)) ? 1
 			//		: ((gameBoard.getWinner() == Board.DRAW) ? 0 : -1);
 		}
@@ -404,7 +403,7 @@ public class CCMCTSPlayer extends Player {
 		 * @param points
 		 *            Points associated with a game
 		 */
-		private void propagation(int points) {
+		private void propagation(double points) {
 			// Iterate through parents until we get to null, backpropagating the
 			// value
 			MoveNode node = this;

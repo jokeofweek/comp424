@@ -4,12 +4,14 @@ import halma.minimax.BoardPointPair;
 import halma.minimax.CombinedMoveGenerator;
 import halma.minimax.MoveGenerator;
 import halma.minimax.features.AdjacentToBaseFeature;
+import halma.minimax.features.AvoidOpponentBaseFeature;
+import halma.minimax.features.DontBlockFriendFeature;
 import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.HuddleFeature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.minimax.features.NotInGoalZoneFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -50,9 +52,11 @@ public class CCMiniMaxPlayer extends Player {
     		(Feature)new ManhattanDistanceFeature(0.9),
     		new LeaveBaseFeature(0.002),
     		new DontLeaveAloneFeature(0.005),
-    		new NotInOpposingBaseFeature(0.015),
+    		new NotInGoalZoneFeature(0.015),
     		new AdjacentToBaseFeature(0.05),
-    		new HuddleFeature(0.25)
+    		new HuddleFeature(0.25),
+    		new AvoidOpponentBaseFeature(0.25),
+    		new DontBlockFriendFeature()
     );
     
     /**

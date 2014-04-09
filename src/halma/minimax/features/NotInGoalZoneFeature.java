@@ -1,14 +1,14 @@
-package s260526659.minimax.features;
+package halma.minimax.features;
 
 import java.awt.Point;
 import java.util.HashSet;
 
 import halma.CCBoard;
 
-public class NotInOpposingBaseFeature extends Feature {
+public class NotInGoalZoneFeature extends Feature {
 	private double weight;
 
-	public NotInOpposingBaseFeature(double weight) {
+	public NotInGoalZoneFeature(double weight) {
 		this.weight = weight;
 	}	
 	

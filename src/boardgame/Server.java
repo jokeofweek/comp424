@@ -54,7 +54,7 @@ import java.awt.EventQueue;
 public class Server implements Runnable {
     protected static final String VERSION = "0.08";
     protected static final int DEFAULT_PORT = 8123;
-    protected static final int DEFAULT_TIMEOUT = 2000;
+    protected static final int DEFAULT_TIMEOUT = 10000;
     protected static final String DEFAULT_BOARDCLASS = "halma.CCBoard";
     
     protected static final boolean DBGNET = false;

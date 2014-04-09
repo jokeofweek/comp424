@@ -8,7 +8,7 @@ import halma.minimax.features.DontLeaveAloneFeature;
 import halma.minimax.features.Feature;
 import halma.minimax.features.LeaveBaseFeature;
 import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInOpposingBaseFeature;
+import halma.minimax.features.NotInGoalZoneFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class CCHeuristicPlayer extends Player {
     		(Feature)new ManhattanDistanceFeature(0.9),
     		new LeaveBaseFeature(0.002),
     		new DontLeaveAloneFeature(0.005),
-    		new NotInOpposingBaseFeature(0.015),
+    		new NotInGoalZoneFeature(0.015),
     		new AdjacentToBaseFeature(0.05) 
     );
     
