@@ -1,13 +1,11 @@
-package halma;
+package s260526659;
+
+import halma.CCBoard;
+import halma.CCMove;
 
 import java.awt.Point;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
@@ -19,7 +17,7 @@ import boardgame.Player;
  * This was my first approach, which simply generated all moves and then
  * picked the best one according to an evaluation function.
  */
-public class CCSimpleAIPlayer extends Player {
+public class CCBestMoveFirst extends Player {
     private final static int[] FRIEND_ID = {3,2,1,0};
     
     private Set<Point> movePoints = new HashSet<>();
@@ -55,8 +53,8 @@ public class CCSimpleAIPlayer extends Player {
     };
     
     /** Provide a default public constructor */
-    public CCSimpleAIPlayer() { super("Simple AI Player"); }
-    public CCSimpleAIPlayer(String s) { super(s); }
+    public CCBestMoveFirst() { super("Simple AI Player"); }
+    public CCBestMoveFirst(String s) { super(s); }
     
     
     public Board createBoard() { return new CCBoard(); }
@@ -85,7 +83,7 @@ public class CCSimpleAIPlayer extends Player {
         }
  
     	if (move.isHop()) {
-    		movePoints.add(move.to);
+    		movePoints.add(move.getTo());
     	} else {
     		movePoints = new HashSet<>();
     	}
@@ -94,19 +92,25 @@ public class CCSimpleAIPlayer extends Player {
         return move;
     }
     
+    /**
+     * This scores a move based on a number of evaluation criteria.
+     * @param m The move.
+     * @param board The board after the move.
+     * @return A score for the move.
+     */
     private int getMoveScore(CCMove m, CCBoard board) {
 		// Empty move
-		if (m.from == null && m.to == null) {
+		if (m.getFrom() == null && m.getTo() == null) {
 			return 0;
 		}
 
 		int progress = getProgress(m);
-		int removedFromBase = (CCBoard.bases[playerID].contains(m.from) && !CCBoard.bases[playerID].contains(m.to)) ? 1 : 0;
-		int stillInBase = CCBoard.bases[playerID].contains(m.to) ? 1 : 0;
-		int joinFriendBase = (!CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
-		int leaveFriendBase = (CCBoard.bases[FRIEND_ID[playerID]].contains(m.from) && !CCBoard.bases[FRIEND_ID[playerID]].contains(m.to)) ? 1 : 0;
-		int canHopAfter = canHopAfterAndProgress(m.to, board) ? 1 : 0;
-		int bestHopSequence = (m.isHop() ? getClosestHopSequence(m.to, board) : 0);
+		int removedFromBase = (CCBoard.bases[playerID].contains(m.getFrom()) && !CCBoard.bases[playerID].contains(m.getTo())) ? 1 : 0;
+		int stillInBase = CCBoard.bases[playerID].contains(m.getTo()) ? 1 : 0;
+		int joinFriendBase = (!CCBoard.bases[FRIEND_ID[playerID]].contains(m.getFrom()) && CCBoard.bases[FRIEND_ID[playerID]].contains(m.getTo())) ? 1 : 0;
+		int leaveFriendBase = (CCBoard.bases[FRIEND_ID[playerID]].contains(m.getFrom()) && !CCBoard.bases[FRIEND_ID[playerID]].contains(m.getTo())) ? 1 : 0;
+		int canHopAfter = canHopAfterAndProgress(m.getTo(), board) ? 1 : 0;
+		int bestHopSequence = (m.isHop() ? getClosestHopSequence(m.getTo(), board) : 0);
 
 
 		int progressWeight = 5;
@@ -195,8 +199,8 @@ public class CCSimpleAIPlayer extends Player {
     
 	private int getProgress(CCMove m) {
 		int ret = 0;
-		int xOffset = m.to.x - m.from.x;
-		int yOffset = m.to.y - m.from.y;
+		int xOffset = m.getTo().x - m.getFrom().x;
+		int yOffset = m.getTo().y - m.getFrom().y;
 
 		if (OFFSETS[playerID][0] * xOffset > 0) ret += Math.abs(xOffset);
 		if (OFFSETS[playerID][0] * xOffset < 0) ret -= Math.abs(xOffset);

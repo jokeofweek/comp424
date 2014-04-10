@@ -63,14 +63,12 @@ public class s260526659Player extends Player {
      * The cached list of moves.
      */
     public Queue<CCMove> moveList = new LinkedList<>();
-    private int turns = 0;
-    private long count = 0;
     
     public s260526659Player(String name, List<Feature> features) {
     	super(name);
     	this.features = features;
     }
-    public s260526659Player() { super("s260526659"); }
+    public s260526659Player() { super("260526659"); }
     public s260526659Player(String s) { super(s); }
     
     public void setFeatures(List<Feature> features) {
@@ -78,7 +76,6 @@ public class s260526659Player extends Player {
 	}
     @Override
     public void gameOver(String msg) {
-    	System.out.println("Average evals/turn: " + (count / (double)turns));
     }
     
 	@Override
@@ -91,9 +88,8 @@ public class s260526659Player extends Player {
 		if (!moveList.isEmpty()) {
 			return moveList.remove();
 		}
-		turns++;
 		
-		BoardPointPair pair = minimax(board, board, 3, true,
+		BoardPointPair pair = minimax(board, board, 2, true,
 				new Pair<Double,BoardPointPair>(0.0 + Integer.MIN_VALUE, null),
 				new Pair<Double,BoardPointPair>(0.0 + Integer.MAX_VALUE, null),
 				playerID
@@ -292,7 +288,6 @@ public class s260526659Player extends Player {
 	 * @return The score.
 	 */
 	public double evaluateBoard(CCBoard board, CCBoard originalBoard, int context) {
-		count++;
 		// If someone is winning, return -Inf or +Inf
 		if (board.getWinner() == CCBoard.getTeamIndex(context)) {
 			return Integer.MAX_VALUE;

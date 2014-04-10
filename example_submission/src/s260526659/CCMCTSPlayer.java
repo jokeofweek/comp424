@@ -1,16 +1,18 @@
-package halma;
+package s260526659;
 
-import halma.minimax.BoardPointPair;
-import halma.minimax.MoveGenerator;
-import halma.minimax.features.AdjacentToBaseFeature;
-import halma.minimax.features.AvoidOpponentBaseFeature;
-import halma.minimax.features.DontBlockFriendFeature;
-import halma.minimax.features.DontLeaveAloneFeature;
-import halma.minimax.features.Feature;
-import halma.minimax.features.HuddleFeature;
-import halma.minimax.features.LeaveBaseFeature;
-import halma.minimax.features.ManhattanDistanceFeature;
-import halma.minimax.features.NotInGoalZoneFeature;
+import halma.CCBoard;
+import halma.CCMove;
+import s260526659.minimax.BoardPointPair;
+import s260526659.minimax.MoveGenerator;
+import s260526659.minimax.features.AdjacentToBaseFeature;
+import s260526659.minimax.features.AvoidOpponentBaseFeature;
+import s260526659.minimax.features.DontBlockFriendFeature;
+import s260526659.minimax.features.DontLeaveAloneFeature;
+import s260526659.minimax.features.Feature;
+import s260526659.minimax.features.HuddleFeature;
+import s260526659.minimax.features.LeaveBaseFeature;
+import s260526659.minimax.features.ManhattanDistanceFeature;
+import s260526659.minimax.features.NotInGoalZoneFeature;
 
 import java.awt.Point;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import boardgame.Player;
 
 /**
  * This is a player which makes use of Monte Carlo Tree Search to play.
+ * This was my second alternate approach as described in my report.
  */
 public class CCMCTSPlayer extends Player {
 

@@ -5,6 +5,9 @@ import halma.CCBoard;
 import java.awt.Point;
 import java.util.HashSet;
 
+/**
+ * A generic feature which can be included in a linear feature evaluation function.
+ */
 public abstract class Feature {
 	
 	public final static Point[] BASE_POINTS={new Point(0,0), new Point(1,0), new Point(2,0), new Point(3,0),
